@@ -1,0 +1,53 @@
+only_rules:
+  - closure_body_length
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - comma
+  - conditional_returns_on_newline
+  - contains_over_first_not_nil
+  - control_statement
+  - empty_count
+  - empty_string
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - force_cast
+  - force_try
+  - function_body_length
+  - identifier_name
+  - large_tuple
+  - legacy_constructor
+  - line_length
+  - nesting
+  - operator_usage_whitespace
+  - prefer_self_type_over_type_of_self
+  - redundant_discardable_let
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - sorted_imports
+  - trailing_comma
+  - trailing_newline
+  - trailing_semicolon
+  - type_body_length
+  - unneeded_break_in_switch
+  - unused_closure_parameter
+  - vertical_whitespace
+  - void_return
+
+included:
+  - FitHappens
+  - FitHappensCore/Sources
+  - FitHappensCore/Tests
+excluded:
+  - FitHappensCore/.build
+  - .build
+line_length:
+  warning: 120
+  error: 150
+function_body_length:
+  warning: 50
+  error: 100
+type_body_length:
+  warning: 250
+  error: 400

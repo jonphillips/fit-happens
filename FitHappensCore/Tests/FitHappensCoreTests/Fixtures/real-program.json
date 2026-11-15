@@ -1,0 +1,122 @@
+FH-PROGRAM-1
+{
+  "workouts": [
+    {
+      "key": "A",
+      "items": [
+        {
+          "key": "flat-bench-press",
+          "name": "Flat barbell bench press",
+          "prescription": "3 × 5–8",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "low-cable-row",
+          "name": "Low cable row",
+          "prescription": "3 × 8–12",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "squat-to-bench",
+          "name": "Squat to bench",
+          "prescription": "2 × 10–12",
+          "loadKind": "bodyweight",
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "standing-cable-hamstring-curl",
+          "name": "Standing cable hamstring curl",
+          "prescription": "2 × 10–15 per leg",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "dumbbell-lateral-raise",
+          "name": "Dumbbell lateral raise",
+          "prescription": "2 × 12–20",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "key": "B",
+      "items": [
+        {
+          "key": "incline-dumbbell-bench",
+          "name": "Incline dumbbell bench (20–30°)",
+          "prescription": "3 × 8–12",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "lat-pulldown",
+          "name": "Lat pulldown",
+          "prescription": "3 × 8–12",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "supported-low-step-up",
+          "name": "Supported low step-up",
+          "prescription": "2 × 8 per leg",
+          "loadKind": "bodyweight",
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "floor-glute-bridge",
+          "name": "Floor glute bridge",
+          "prescription": "2 × 10–15",
+          "loadKind": "bodyweight",
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "military-press",
+          "name": "Military press",
+          "prescription": "2 × 6–10",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        },
+        {
+          "key": "dumbbell-lateral-raise",
+          "name": "Dumbbell lateral raise",
+          "prescription": "2 × 12–20",
+          "loadKind": "weight",
+          "startingWeight": 0,
+          "increment": null,
+          "loadLabel": null,
+          "notes": null
+        }
+      ]
+    }
+  ]
+}
