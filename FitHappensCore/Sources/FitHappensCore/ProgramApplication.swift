@@ -52,7 +52,62 @@ public enum ProgramApplication {
   ) throws -> ProgramChangeSet {
     let contract = try ProgramContractDecoder.decode(programText).contract
     return try database.write { database in
-      try apply(contract: contract, programText: programText, acceptedAt: acceptedAt, in: database)
+      try convergeDuplicateRows(in: database)
+      return try apply(contract: contract, programText: programText, acceptedAt: acceptedAt, in: database)
+    }
+  }
+
+  private static func convergeDuplicateRows(in database: Database) throws {
+    let exercises = try Exercise.all.fetchAll(database)
+    let exerciseWinners = canonicalRows(exercises, key: \.key, id: \.id)
+    let exerciseIDByRowID = Dictionary(uniqueKeysWithValues: exercises.compactMap { row in
+      exerciseWinners[row.key].map { (row.id, $0.id) }
+    })
+    let workouts = try Workout.all.fetchAll(database)
+    let workoutWinners = canonicalRows(workouts, key: \.key, id: \.id)
+    let workoutIDByRowID = Dictionary(uniqueKeysWithValues: workouts.compactMap { row in
+      workoutWinners[row.key].map { (row.id, $0.id) }
+    })
+
+    let existingItems = try WorkoutItem.all.fetchAll(database)
+    let itemGroups = Dictionary(grouping: existingItems) { item in
+      ItemIdentity(
+        workoutID: workoutIDByRowID[item.workoutID] ?? item.workoutID,
+        exerciseID: exerciseIDByRowID[item.exerciseID] ?? item.exerciseID
+      )
+    }
+    let itemWinners = itemGroups.values.compactMap { items in
+      items.min { $0.id.uuidString < $1.id.uuidString }
+    }
+    let survivingItemIDs = Set(itemWinners.map(\.id))
+    for var item in itemWinners {
+      let originalWorkoutID = item.workoutID
+      let originalExerciseID = item.exerciseID
+      item.workoutID = workoutIDByRowID[originalWorkoutID] ?? originalWorkoutID
+      item.exerciseID = exerciseIDByRowID[originalExerciseID] ?? originalExerciseID
+      guard item.workoutID != originalWorkoutID || item.exerciseID != originalExerciseID else { continue }
+      try WorkoutItem.upsert { WorkoutItem.Draft(item) }.execute(database)
+    }
+
+    for var completionItem in try CompletionItem.all.fetchAll(database) {
+      guard let canonicalExerciseID = exerciseIDByRowID[completionItem.exerciseID],
+            canonicalExerciseID != completionItem.exerciseID
+      else { continue }
+      completionItem.exerciseID = canonicalExerciseID
+      try CompletionItem.upsert { CompletionItem.Draft(completionItem) }.execute(database)
+    }
+
+    for item in existingItems where !survivingItemIDs.contains(item.id) {
+      try WorkoutItem.find(item.id).delete().execute(database)
+    }
+    let exerciseLosers = exercises.filter { exerciseWinners[$0.key]?.id != $0.id }
+    let workoutLosers = workouts.filter { workoutWinners[$0.key]?.id != $0.id }
+    // References are repointed before parent deletion; ON DELETE CASCADE relies on foreign keys being on.
+    for exercise in exerciseLosers {
+      try Exercise.find(exercise.id).delete().execute(database)
+    }
+    for workout in workoutLosers {
+      try Workout.find(workout.id).delete().execute(database)
     }
   }
 
@@ -185,5 +240,13 @@ public enum ProgramApplication {
       guard result.updateValue(row, forKey: rowKey) == nil else { throw duplicateError(rowKey) }
     }
     return result
+  }
+
+  private static func canonicalRows<Row, Key: Hashable>(
+    _ rows: [Row], key: (Row) -> Key, id: (Row) -> UUID
+  ) -> [Key: Row] {
+    Dictionary(grouping: rows, by: key).compactMapValues { candidates in
+      candidates.min { id($0).uuidString < id($1).uuidString }
+    }
   }
 }

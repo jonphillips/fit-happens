@@ -27,7 +27,8 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
   as one migration, following `persistence-and-sync.md`. The `Load` enum. The `FH-PROGRAM: v1` decoder
   with actionable coding-path errors, the rules constant (ADR-0002 D2), and a pure function from
   (current program, proposal) to a **change set**: added, retired, restored, renamed, load-kind
-  changes, per-workout membership/prescription/order changes, and carried weights. Apply = reconcile
+  changes, per-workout membership/prescription/order changes, carried weights, and ignored starting
+  weights. Apply = reconcile
   exercises, workouts, and workout items by stable identity, then add a `programRevisions` row in one
   write transaction. Rotation and
   completion as pure functions (ADR-0003 D2, D3). Fixture-driven tests, including a fixture converted
