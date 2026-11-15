@@ -20,8 +20,8 @@ public enum ProgramContractRules {
     }]
   }
   Keep units in pounds. Reuse a stable readable exercise key for the same lift; a new name is a rename.
-  New weighted exercises need startingWeight. Do not include startingWeight for an existing active key;
-  its working weight carries over. For a retired key being restored, the app carries its old weight.
+  New weighted exercises need startingWeight. A startingWeight on an existing or restored key is ignored;
+  the app keeps its working weight.
   A change from bodyweight to weight needs a startingWeight; a change from weight to bodyweight omits it.
   Missing exercise keys retire the exercise. Include all workouts and items in order.
   """

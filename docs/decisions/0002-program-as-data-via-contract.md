@@ -40,9 +40,9 @@ key, with its name, prescription, load kind, and optional increment, label, and 
 - **A known key is the same lift.** A new name is a rename, and the working weight carries over.
   A retired key that returns is restored and keeps its previous weight.
 - **An unknown key is a new exercise** and must carry a starting weight if it's weighted.
-- **Starting weights only.** For an active key, the contract can't change its working weight; that
-  stays on the stepper. A load-kind change to `weight` requires a starting weight; a change to
-  `bodyweight` has no weight. Both are shown in the review.
+- **Starting weights only.** For a known key whose load kind is unchanged, active or restored, a
+  starting weight is ignored and the working weight carries over; the review shows it as ignored.
+  A load-kind change to `weight` requires a starting weight; a change to `bodyweight` has no weight.
 - **A key that disappears retires the exercise.** It stays in history and is never deleted.
 - Workouts and `workoutItems` are current-program rows. Apply deletes a workout or item that the
   accepted contract removes; completion snapshots and `programRevisions` remain independent.

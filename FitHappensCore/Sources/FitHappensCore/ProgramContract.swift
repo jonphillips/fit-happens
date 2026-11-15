@@ -76,7 +76,6 @@ public enum ProgramContractError: Error, Equatable, Sendable {
   case bodyweightHasStartingWeight(String)
   case invalidWeight(String)
   case invalidIncrement(String)
-  case existingExerciseHasStartingWeight(String)
   case loadKindChangedWithoutWeight(String)
 }
 
@@ -152,9 +151,6 @@ public enum ProgramContractDecoder {
         exerciseDefinitions[item.key] = item
         if let weight = item.startingWeight, !weight.isFinite || weight < 0 {
           throw ProgramContractError.invalidWeight(item.key)
-        }
-        if item.loadKind == .bodyweight, item.startingWeight != nil {
-          throw ProgramContractError.bodyweightHasStartingWeight(item.key)
         }
         if let increment = item.increment, !increment.isFinite || increment <= 0 {
           throw ProgramContractError.invalidIncrement(item.key)
@@ -306,6 +302,12 @@ public struct WeightCarryover: Equatable, Sendable {
   public var load: Load
 }
 
+public struct IgnoredStartingWeight: Equatable, Sendable {
+  public var exerciseKey: String
+  public var proposedPounds: Double
+  public var keptLoad: Load
+}
+
 public struct ProgramItemAddition: Equatable, Sendable {
   public var exerciseKey: String
   public var prescription: String
@@ -337,6 +339,7 @@ public struct ProgramChangeSet: Equatable, Sendable {
   public var workoutChanges: [WorkoutMembershipChange]
   public var workoutOrderChanged: Bool
   public var carriedWeights: [WeightCarryover]
+  public var ignoredStartingWeights: [IgnoredStartingWeight]
 }
 
 public enum ProgramChanges {
@@ -354,6 +357,7 @@ public enum ProgramChanges {
     var renames: [ProgramRename] = []
     var kindChanges: [LoadKindChange] = []
     var carried: [WeightCarryover] = []
+    var ignoredStartingWeights: [IgnoredStartingWeight] = []
   }
 
   public static func make(current: CurrentProgram, proposal: ProgramContract) throws -> ProgramChangeSet {
@@ -370,7 +374,8 @@ public enum ProgramChanges {
       removedWorkoutKeys: workoutChanges.removed,
       workoutChanges: workoutChanges.memberships,
       workoutOrderChanged: workoutChanges.orderChanged,
-      carriedWeights: exerciseChanges.carried.sorted { $0.exerciseKey < $1.exerciseKey }
+      carriedWeights: exerciseChanges.carried.sorted { $0.exerciseKey < $1.exerciseKey },
+      ignoredStartingWeights: exerciseChanges.ignoredStartingWeights.sorted { $0.exerciseKey < $1.exerciseKey }
     )
   }
 
@@ -393,18 +398,27 @@ public enum ProgramChanges {
         if item.loadKind == .weight, item.startingWeight == nil {
           throw ProgramContractError.missingStartingWeight(item.key)
         }
+        if item.loadKind == .bodyweight, item.startingWeight != nil {
+          throw ProgramContractError.bodyweightHasStartingWeight(item.key)
+        }
         changes.added.append(item)
         continue
       }
       if restoring != nil { changes.restored.append(item.key) }
       if previous.loadKind == item.loadKind {
-        if item.startingWeight != nil {
-          throw ProgramContractError.existingExerciseHasStartingWeight(item.key)
+        guard let load = previous.load else { throw ProgramContractError.invalidWeight(item.key) }
+        if let proposedPounds = item.startingWeight {
+          changes.ignoredStartingWeights.append(.init(
+            exerciseKey: item.key, proposedPounds: proposedPounds, keptLoad: load
+          ))
         }
-        if let load = previous.load { changes.carried.append(.init(exerciseKey: item.key, load: load)) }
+        changes.carried.append(.init(exerciseKey: item.key, load: load))
       } else {
         if item.loadKind == .weight, item.startingWeight == nil {
           throw ProgramContractError.loadKindChangedWithoutWeight(item.key)
+        }
+        if item.loadKind == .bodyweight, item.startingWeight != nil {
+          throw ProgramContractError.bodyweightHasStartingWeight(item.key)
         }
         changes.kindChanges.append(.init(
           exerciseKey: item.key, oldKind: previous.loadKind, newKind: item.loadKind

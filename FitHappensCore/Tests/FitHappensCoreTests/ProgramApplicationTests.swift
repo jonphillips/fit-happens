@@ -29,6 +29,36 @@ struct ProgramApplicationTests {
     #expect(state.revisions.first?.contractText == text)
   }
 
+  @Test func reapplyingStoredRevisionKeepsChangedWeightsAndReportsIgnoredValues() throws {
+    let database = try makeDatabase()
+    let fixtureURL = try #require(
+      Bundle.module.url(forResource: "real-program", withExtension: "json", subdirectory: "Fixtures")
+    )
+    let originalText = try String(contentsOf: fixtureURL, encoding: .utf8)
+    _ = try ProgramApplication.apply(programText: originalText, to: database)
+    let storedText = try #require(try storedState(database).revisions.first?.contractText)
+    try database.write { connection in
+      let row = try #require(try Exercise.all.fetchAll(connection).first { $0.key == "low-cable-row" })
+      var changed = row
+      changed.currentLoadPounds = 155
+      try Exercise.upsert { Exercise.Draft(changed) }.execute(connection)
+    }
+
+    let changes = try ProgramApplication.apply(programText: storedText, to: database)
+    let state = try storedState(database)
+    let row = try #require(state.exercises.first { $0.key == "low-cable-row" })
+
+    #expect(row.currentLoadPounds == 155)
+    #expect(changes.carriedWeights.contains(WeightCarryover(
+      exerciseKey: "low-cable-row", load: .weight(pounds: 155)
+    )))
+    #expect(changes.ignoredStartingWeights.contains(IgnoredStartingWeight(
+      exerciseKey: "low-cable-row", proposedPounds: 0, keptLoad: .weight(pounds: 155)
+    )))
+    #expect(state.revisions.count == 2)
+    #expect(state.revisions.contains { $0.contractText == storedText })
+  }
+
   @Test func replacementPreservesIdentityAndReconcilesProgram() throws {
     let database = try makeDatabase()
     let before = try seedPriorState(database)

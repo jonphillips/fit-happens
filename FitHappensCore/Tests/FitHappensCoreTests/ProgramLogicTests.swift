@@ -17,12 +17,18 @@ struct ProgramLogicTests {
     )
     let proposal = ProgramContract(workouts: [
       ProgramWorkout(key: "B", items: [
-        ProgramExercise(key: "bench", name: "Flat bench", prescription: "3 × 5–8", loadKind: .weight),
+        ProgramExercise(
+          key: "bench", name: "Flat bench", prescription: "3 × 5–8", loadKind: .weight,
+          startingWeight: 155
+        ),
         ProgramExercise(key: "new", name: "New lift", prescription: "2 × 10", loadKind: .weight, startingWeight: 0)
       ]),
       ProgramWorkout(key: "A", items: [
         ProgramExercise(key: "row", name: "Row", prescription: "3 × 8", loadKind: .weight),
-        ProgramExercise(key: "bench", name: "Flat bench", prescription: "3 × 5–8", loadKind: .weight)
+        ProgramExercise(
+          key: "bench", name: "Flat bench", prescription: "3 × 5–8", loadKind: .weight,
+          startingWeight: 155
+        )
       ])
     ])
     let changes = try ProgramChanges.make(current: current, proposal: proposal)
@@ -33,6 +39,9 @@ struct ProgramLogicTests {
     #expect(changes.carriedWeights == [
       WeightCarryover(exerciseKey: "bench", load: .weight(pounds: 135)),
       WeightCarryover(exerciseKey: "row", load: .weight(pounds: 90))
+    ])
+    #expect(changes.ignoredStartingWeights == [
+      IgnoredStartingWeight(exerciseKey: "bench", proposedPounds: 155, keptLoad: .weight(pounds: 135))
     ])
     let workoutB = try #require(changes.workoutChanges.first { $0.workoutKey == "B" })
     #expect(workoutB.addedItems == [ProgramItemAddition(exerciseKey: "new", prescription: "2 × 10")])
@@ -102,7 +111,7 @@ struct ProgramLogicTests {
     #expect(changes.carriedWeights.contains(WeightCarryover(exerciseKey: "old", load: .weight(pounds: 40))))
   }
 
-  @Test func restoredExerciseCannotOverrideItsCarriedWeight() {
+  @Test func restoredExerciseIgnoresAndReportsItsStartingWeight() throws {
     let current = CurrentProgram(
       exercises: [],
       retiredExercises: [CurrentExercise(key: "old", name: "Old lift", loadKind: .weight, load: .weight(pounds: 40))],
@@ -113,9 +122,11 @@ struct ProgramLogicTests {
         ProgramExercise(key: "old", name: "Old lift", prescription: "2 × 8", loadKind: .weight, startingWeight: 5)
       ])
     ])
-    #expect(throws: ProgramContractError.existingExerciseHasStartingWeight("old")) {
-      try ProgramChanges.make(current: current, proposal: proposal)
-    }
+    let changes = try ProgramChanges.make(current: current, proposal: proposal)
+    #expect(changes.ignoredStartingWeights == [
+      IgnoredStartingWeight(exerciseKey: "old", proposedPounds: 5, keptLoad: .weight(pounds: 40))
+    ])
+    #expect(changes.carriedWeights == [WeightCarryover(exerciseKey: "old", load: .weight(pounds: 40))])
   }
 
   @Test func bodyweightToWeightIsAReportedKindChangeWithStartingWeight() throws {
