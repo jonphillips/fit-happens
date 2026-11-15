@@ -1,0 +1,74 @@
+# ADR-0002 — The program is data, replaced only through a reviewed contract
+
+*Status: **proposed** — 2026-11-15, ratified by Jon merging the plan PR that adds it. Builds on
+jon-platform ADR-0007 (app data over local MCP) and ADR-0009 (`ChatAccessKit`); this app is their
+third chat-access consumer after Yes Chef and Galavant.*
+
+Summary: Workouts and exercises live in the database, not in Swift constants. A new program arrives
+as a versioned text contract, by paste (M1) or staged by ChatGPT through the chat-access inbox
+(later), and one decoder serves both. The app shows what will change; a tap applies it. Exercises
+keep their identity across programs through a stable key, so working weights carry over.
+
+## Context
+
+The program today is Markdown in a private GitHub repo. Jon wants to discuss changes with ChatGPT
+and have ChatGPT push the new routine to the app (2026-11-15). Bundled constants would mean a code
+change and a release for every program change.
+
+## Decision
+
+### D1 — Schema
+
+- `exercises`: id, **key** (a stable, readable slug such as `flat-bench-press`), name, load kind,
+  current load, increment, an optional load label ("each"), optional notes, retired flag.
+- `workouts`: id, key (`A`, `B`, …), position.
+- `workoutItems`: id, workout, exercise, position, prescription text.
+- `programRevisions`: id, accepted-at, and the full accepted contract text, written once and never
+  edited.
+
+The load is a Swift enum (`weight(pounds)`, `bodyweight`), however it's stored, so a bodyweight
+exercise can't carry a weight. Working weight is **per exercise**: the same lift is the same weight in
+every workout, and a real variant is a different key. The prescription is display text; nothing
+computes on it. Add a duration load kind only when an exercise needs it.
+
+### D2 — The contract
+
+A versioned block with a `HandoffContractMarker` (LLMHandoffKit), named `FH-PROGRAM-1`,
+carrying the whole program: workouts in order, each with its items. Each item names an exercise by
+key, with its name, prescription, load kind, and optional increment, label, and notes. Rules:
+
+- **A known key is the same lift.** A new name is a rename, and the weight carries over.
+- **An unknown key is a new exercise** and must carry a starting weight if it's weighted.
+- **Starting weights only.** The contract can't change an existing exercise's weight; that stays on
+  the stepper. (Jon to confirm, see open-questions.)
+- **A key that disappears retires the exercise.** It stays in history and is never deleted.
+- Any number of workouts is allowed; rotation follows program order (ADR-0003).
+
+The rules live in one Core constant, used for ChatGPT Project instructions (paste path) and for the
+MCP server's `instructions` (jon-platform ADR-0007 D6).
+
+### D3 — Review, then apply
+
+Every proposal, pasted or staged, opens the same review: exercises added, retired, and renamed,
+prescriptions changed, workouts reordered, and which weights carry over. **Apply** is the only write.
+It reconciles by identity (upsert survivors by key, retire the missing) and stores the contract as a
+new `programRevisions` row. Going back to an earlier program re-applies its stored contract through
+the same review.
+
+### D4 — Two ways in, one decoder
+
+- **Paste** (M1): also how the first program arrives. ChatGPT converts the Markdown into the
+  contract.
+- **Chat access** (later): the iPhone app writes a small export (the current program with keys,
+  current weights, recent completions) to its iCloud Drive container. A Mac helper built on
+  MCPServerKit and ChatAccessKit offers read tools on it and a `propose_program` tool that validates
+  with the same decoder and stages the contract into the inbox. The app shows staged proposals and
+  opens them in the review. Health data stays out of the export (jon-platform ADR-0007 D5) unless
+  Jon adds it on purpose.
+
+## Consequences
+
+- The Markdown repo is retired as the source of truth after the first import.
+- Key uniqueness can't be a database constraint under CloudKit. The importer looks up by key, and M1
+  decides how a duplicate (two devices applying at once) resolves, per `persistence-and-sync.md`.
+- The review screen is a third screen, justified because it's the only way to change the program.
