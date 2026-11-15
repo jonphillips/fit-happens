@@ -1,0 +1,20 @@
+.DS_Store
+xcuserdata/
+*.xcuserstate
+.build/
+DerivedData/
+
+# Machine-local build credentials. Copy the tracked example, then add the real
+# value locally; the app target reads it through its Info.plist build setting.
+Config/Secrets.xcconfig
+
+# Machine-local Claude Code overrides (permissions, sim UUIDs, abs paths).
+# The shared SessionStart hook lives in the committed .claude/settings.json.
+.claude/settings.local.json
+.claude/jon-platform
+
+# Background-agent worktrees (isolated checkouts, never committed)
+.claude/worktrees/
+
+# Local TestFlight archives, exports, recovery state, and generated notes.
+build/testflight/
