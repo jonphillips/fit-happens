@@ -31,8 +31,11 @@ Never paste a raw build log into a PR or chat. `quiet-run` retains it and report
 
 ## CI
 
-The GitHub Actions caller is intended to use Jon's `jonphillips/ci-workflows` reusable iOS workflow
-with `package-path: FitHappensCore`. It needs the repository's read-only `JON_PLATFORM_PAT` secret to
-clone the private `jon-platform` checkout for local Swift package dependencies. Jon adds that secret;
-it is not stored in this repository. The hosted runner gate must skip green until its Swift toolchain
-and SDK can build the iOS/macOS 27 package manifest, then run automatically when supported.
+`.github/workflows/ci.yml` calls Jon's `jonphillips/ci-workflows` reusable iOS workflow with
+`package-path: FitHappensCore`. It inherits repository secrets so the test job can clone private
+`jon-platform` for local Swift package dependencies with the read-only `JON_PLATFORM_PAT`. That
+secret is configured in the GitHub repository and is not stored here.
+
+The caller pins `macos-26` and sets a Swift 6.4 floor. The reusable workflow skips the test job green
+when the hosted runner has an older toolchain; it runs automatically once the runner can build the
+iOS/macOS 27 package manifest. The local full gate remains the verification path until then.

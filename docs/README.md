@@ -13,4 +13,5 @@ audience, and GitHub PR state is the only status.
 | [efforts/](efforts/README.md) | Off-arc briefs | Architect; executor only via `NEXT_UP.md` |
 | [open-questions.md](open-questions.md) | Decisions owed, things to verify, candidates | Architect and Jon, **never the executor** |
 | [verification.md](verification.md) | The standing check pattern | Executor |
+| [device-passes.md](device-passes.md) | Device-only checks still owed to Jon | Jon; architect |
 | [DONE-LOG.md](DONE-LOG.md) | History, newest first | Humans; no dispatch reads it |

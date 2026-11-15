@@ -1,7 +1,7 @@
-# Next Up — M1 Dispatch 1: scaffold and the Core schema + program contract
+# Next Up — M1 Dispatch 2: Next Workout and history/corrections
 
-**Slices:** M1 · S0, M1 · S1
-**Briefs:** docs/milestones/M1-core-loop.md §Identifiers, §S0–S1; docs/decisions/0001–0003
-**Done when:** per the briefs. The app builds with sync wired, and Core's tests cover the contract decoder, the change set, apply, rotation, and completion, including a fixture converted from the real Markdown program.
-**Owed:** none
-**Notes:** No UI beyond an empty launch screen. The identifiers in §Identifiers are permanent; don't improvise them. Ask Jon for the Markdown program for the fixture if it isn't in the PR thread.
+**Slices:** M1 · S2, M1 · S4
+**Briefs:** docs/milestones/M1-core-loop.md §S2, §S4; docs/decisions/0001–0003
+**Done when:** the Next Workout screen shows the next workout and last-done date, ordered exercises and prescriptions, editable loads, and Complete Workout; completion advances rotation, history supports undo and date correction, and completion snapshots remain independent of the current program.
+**Owed:** see [device-passes.md](device-passes.md)
+**Notes:** The identifiers in §Identifiers are permanent; don't improvise them. Health remains out of scope for M1.

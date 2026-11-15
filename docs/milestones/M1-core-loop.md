@@ -20,10 +20,10 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
 
 ## Slices
 
-- [ ] **S0 — Scaffold.** XcodeGen `project.yml`, an iPhone app target, a `FitHappensCore` Swift package,
+- [x] **S0 — Scaffold.** XcodeGen `project.yml`, an iPhone app target, a `FitHappensCore` Swift package,
   SwiftLint, git hooks, and `scripts/check-drift.sh` per jon-platform `drift-control.md`. SQLiteData with CloudSyncKit wired to the private database (ADR-0001
   D2). Fill in [verification.md](../verification.md) with the real gate. An empty launch screen is fine.
-- [ ] **S1 — Schema and the program contract (Core, no UI).** The tables of ADR-0002 D1 and ADR-0003 D1
+- [x] **S1 — Schema and the program contract (Core, no UI).** The tables of ADR-0002 D1 and ADR-0003 D1
   as one migration, following `persistence-and-sync.md`. The `Load` enum. The `FH-PROGRAM: v1` decoder
   with actionable coding-path errors, the rules constant (ADR-0002 D2), and a pure function from
   (current program, proposal) to a **change set**: added, retired, restored, renamed, load-kind
