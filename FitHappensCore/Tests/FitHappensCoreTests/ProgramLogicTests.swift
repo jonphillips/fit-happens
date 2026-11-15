@@ -93,13 +93,29 @@ struct ProgramLogicTests {
     let proposal = ProgramContract(workouts: [
       ProgramWorkout(key: "A", items: [
         ProgramExercise(key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight),
-        ProgramExercise(key: "old", name: "Old lift", prescription: "2 × 8", loadKind: .weight, startingWeight: 5)
+        ProgramExercise(key: "old", name: "Old lift", prescription: "2 × 8", loadKind: .weight)
       ])
     ])
     let changes = try ProgramChanges.make(current: current, proposal: proposal)
     #expect(changes.restoredExerciseKeys == ["old"])
     #expect(changes.retiredExerciseKeys.isEmpty)
     #expect(changes.carriedWeights.contains(WeightCarryover(exerciseKey: "old", load: .weight(pounds: 40))))
+  }
+
+  @Test func restoredExerciseCannotOverrideItsCarriedWeight() {
+    let current = CurrentProgram(
+      exercises: [],
+      retiredExercises: [CurrentExercise(key: "old", name: "Old lift", loadKind: .weight, load: .weight(pounds: 40))],
+      workouts: []
+    )
+    let proposal = ProgramContract(workouts: [
+      ProgramWorkout(key: "A", items: [
+        ProgramExercise(key: "old", name: "Old lift", prescription: "2 × 8", loadKind: .weight, startingWeight: 5)
+      ])
+    ])
+    #expect(throws: ProgramContractError.existingExerciseHasStartingWeight("old")) {
+      try ProgramChanges.make(current: current, proposal: proposal)
+    }
   }
 
   @Test func bodyweightToWeightIsAReportedKindChangeWithStartingWeight() throws {

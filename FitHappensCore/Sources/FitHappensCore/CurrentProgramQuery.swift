@@ -9,7 +9,7 @@ public enum CurrentProgramQuery {
   /// from reappearing in each proposal while retaining enough data to restore a key.
   public static func fetch(in database: Database) throws -> CurrentProgram {
     let records = try Exercise.all.fetchAll(database)
-    for exercise in records where exercise.load == nil {
+    for exercise in records where !exercise.isRetired && exercise.load == nil {
       throw CurrentProgramQueryError.invalidLoad(exercise.key)
     }
     let exercisesByID = Dictionary(uniqueKeysWithValues: records.map { ($0.id, $0) })

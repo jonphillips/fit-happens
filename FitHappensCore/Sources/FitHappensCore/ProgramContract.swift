@@ -398,7 +398,7 @@ public enum ProgramChanges {
       }
       if restoring != nil { changes.restored.append(item.key) }
       if previous.loadKind == item.loadKind {
-        if old != nil, item.startingWeight != nil {
+        if item.startingWeight != nil {
           throw ProgramContractError.existingExerciseHasStartingWeight(item.key)
         }
         if let load = previous.load { changes.carried.append(.init(exerciseKey: item.key, load: load)) }
