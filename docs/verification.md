@@ -6,8 +6,33 @@ device-only risk (HealthKit, CloudKit, Bluetooth) in the PR as unverified and st
 
 ## The gate
 
-**M1 S0 writes this section**: `scripts/check-drift.sh` as the single entry point (SwiftLint, the Core
-package's `swift test`, an app build, and jon-platform's `check-handoff`), with every noisy stage run
-through `~/code/jon-platform/scripts/quiet-run`. Never paste a raw build log into a PR or chat.
+Use `scripts/check-drift.sh` as the single local entry point. It runs, in order:
 
-Until then, a dispatch that touches only docs runs `~/code/jon-platform/scripts/check-handoff`.
+1. `xcodegen generate --quiet`.
+2. Strict SwiftLint through `~/code/jon-platform/scripts/quiet-run`.
+3. The Core package tests through `quiet-run`.
+4. Xcode package resolution, then the pinned iOS Simulator build with macro validation skipped and
+   build caches under `.build/`.
+5. `~/code/jon-platform/scripts/check-handoff`.
+
+For a fast first pass, run a focused test before the full suite, for example:
+
+```sh
+~/code/jon-platform/scripts/quiet-run swift test --package-path FitHappensCore --filter ProgramContractTests
+```
+
+The full package command is:
+
+```sh
+~/code/jon-platform/scripts/quiet-run swift test --package-path FitHappensCore
+```
+
+Never paste a raw build log into a PR or chat. `quiet-run` retains it and reports the log path.
+
+## CI
+
+The GitHub Actions caller is intended to use Jon's `jonphillips/ci-workflows` reusable iOS workflow
+with `package-path: FitHappensCore`. It needs the repository's read-only `JON_PLATFORM_PAT` secret to
+clone the private `jon-platform` checkout for local Swift package dependencies. Jon adds that secret;
+it is not stored in this repository. The hosted runner gate must skip green until its Swift toolchain
+and SDK can build the iOS/macOS 27 package manifest, then run automatically when supported.

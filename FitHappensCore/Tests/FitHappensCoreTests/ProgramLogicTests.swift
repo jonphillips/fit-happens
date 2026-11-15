@@ -3,7 +3,7 @@ import Foundation
 import Testing
 
 struct ProgramLogicTests {
-  @Test func changeSetReportsAddedRetiredRenamedReorderedAndCarriedWeights() throws {
+  @Test func changeSetReportsExerciseChangesAndPerWorkoutMembership() throws {
     let current = CurrentProgram(
       exercises: [
         CurrentExercise(key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 135)),
@@ -30,12 +30,91 @@ struct ProgramLogicTests {
     #expect(changes.retiredExerciseKeys == ["retired"])
     #expect(changes.renames.map(\.newName) == ["Flat bench"])
     #expect(changes.workoutOrderChanged)
-    #expect(changes.exerciseOrderChanges == ["B", "A"])
     #expect(changes.carriedWeights == [
       WeightCarryover(exerciseKey: "bench", load: .weight(pounds: 135)),
       WeightCarryover(exerciseKey: "row", load: .weight(pounds: 90))
     ])
-    #expect(changes.prescriptionChanges.count == 2)
+    let workoutB = try #require(changes.workoutChanges.first { $0.workoutKey == "B" })
+    #expect(workoutB.addedItems == [ProgramItemAddition(exerciseKey: "new", prescription: "2 × 10")])
+    #expect(workoutB.removedExerciseKeys == ["row"])
+    #expect(workoutB.prescriptionChanges.count == 1)
+    #expect(!workoutB.orderChanged)
+    let workoutA = try #require(changes.workoutChanges.first { $0.workoutKey == "A" })
+    #expect(workoutA.orderChanged)
+  }
+
+  @Test func changeSetReportsAnExerciseMovedBetweenWorkouts() throws {
+    let current = CurrentProgram(
+      exercises: [
+        CurrentExercise(key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 135))
+      ],
+      workouts: [
+        CurrentWorkout(key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": "3 × 5"]),
+        CurrentWorkout(key: "B", exerciseKeys: [], prescriptions: [:])
+      ]
+    )
+    let proposal = ProgramContract(workouts: [
+      ProgramWorkout(key: "A", items: [
+        ProgramExercise(key: "other", name: "Other", prescription: "2 × 8", loadKind: .weight, startingWeight: 0)
+      ]),
+      ProgramWorkout(key: "B", items: [
+        ProgramExercise(key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight)
+      ])
+    ])
+    let changes = try ProgramChanges.make(current: current, proposal: proposal)
+    let removedFromA = try #require(changes.workoutChanges.first { $0.workoutKey == "A" })
+    let addedToB = try #require(changes.workoutChanges.first { $0.workoutKey == "B" })
+    #expect(removedFromA.removedExerciseKeys == ["bench"])
+    #expect(addedToB.addedItems == [ProgramItemAddition(exerciseKey: "bench", prescription: "3 × 5")])
+  }
+
+  @Test func changeSetReportsAddedAndRemovedWorkoutsWithTheirItems() throws {
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 135))],
+      workouts: [CurrentWorkout(key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": "3 × 5"])]
+    )
+    let addedWorkout = ProgramWorkout(key: "C", items: [
+      ProgramExercise(key: "bench", name: "Bench", prescription: "2 × 8", loadKind: .weight),
+      ProgramExercise(key: "new", name: "New lift", prescription: "3 × 10", loadKind: .weight, startingWeight: 10)
+    ])
+    let proposal = ProgramContract(workouts: [addedWorkout])
+    let changes = try ProgramChanges.make(current: current, proposal: proposal)
+    #expect(changes.addedWorkouts == [addedWorkout])
+    #expect(changes.removedWorkoutKeys == ["A"])
+    #expect(!changes.workoutOrderChanged)
+  }
+
+  @Test func changeSetReportsRestoringRetiredExerciseAndCarryingItsWeight() throws {
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 135))],
+      retiredExercises: [CurrentExercise(key: "old", name: "Old lift", loadKind: .weight, load: .weight(pounds: 40))],
+      workouts: [CurrentWorkout(key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": "3 × 5"])]
+    )
+    let proposal = ProgramContract(workouts: [
+      ProgramWorkout(key: "A", items: [
+        ProgramExercise(key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight),
+        ProgramExercise(key: "old", name: "Old lift", prescription: "2 × 8", loadKind: .weight, startingWeight: 5)
+      ])
+    ])
+    let changes = try ProgramChanges.make(current: current, proposal: proposal)
+    #expect(changes.restoredExerciseKeys == ["old"])
+    #expect(changes.retiredExerciseKeys.isEmpty)
+    #expect(changes.carriedWeights.contains(WeightCarryover(exerciseKey: "old", load: .weight(pounds: 40))))
+  }
+
+  @Test func bodyweightToWeightIsAReportedKindChangeWithStartingWeight() throws {
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(key: "bridge", name: "Bridge", loadKind: .bodyweight, load: .bodyweight)],
+      workouts: [CurrentWorkout(key: "A", exerciseKeys: ["bridge"], prescriptions: ["bridge": "2 × 10"])]
+    )
+    let proposal = ProgramContract(workouts: [
+      ProgramWorkout(key: "A", items: [
+        ProgramExercise(key: "bridge", name: "Bridge", prescription: "2 × 10", loadKind: .weight, startingWeight: 15)
+      ])
+    ])
+    let changes = try ProgramChanges.make(current: current, proposal: proposal)
+    #expect(changes.loadKindChanges == [LoadKindChange(exerciseKey: "bridge", oldKind: .bodyweight, newKind: .weight)])
+    #expect(changes.carriedWeights.isEmpty)
   }
 
   @Test func newWeightedExerciseNeedsStartingWeight() {
@@ -46,6 +125,21 @@ struct ProgramLogicTests {
     ])
     #expect(throws: ProgramContractError.missingStartingWeight("new")) {
       try ProgramChanges.make(current: CurrentProgram(exercises: [], workouts: []), proposal: proposal)
+    }
+  }
+
+  @Test func weightKindChangeNeedsStartingWeight() {
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(key: "bridge", name: "Bridge", loadKind: .bodyweight, load: .bodyweight)],
+      workouts: []
+    )
+    let proposal = ProgramContract(workouts: [
+      ProgramWorkout(key: "A", items: [
+        ProgramExercise(key: "bridge", name: "Bridge", prescription: "2 × 10", loadKind: .weight)
+      ])
+    ])
+    #expect(throws: ProgramContractError.loadKindChangedWithoutWeight("bridge")) {
+      try ProgramChanges.make(current: current, proposal: proposal)
     }
   }
 

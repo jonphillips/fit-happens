@@ -2,7 +2,8 @@ import Foundation
 
 public enum ProgramContractRules {
   public static let instructions = """
-  Return a complete program as plain JSON preceded by the line FH-PROGRAM-1. Use this shape:
+  Return the complete program as JSON. Prefix it with FH-PROGRAM: v1 when possible. One fenced JSON
+  block is okay; short prose around it is okay. Use this shape:
   {
     "workouts": [{
       "key": "A",
@@ -11,7 +12,7 @@ public enum ProgramContractRules {
         "name": "Flat barbell bench press",
         "prescription": "3 × 5–8",
         "loadKind": "weight",
-        "startingWeight": 0,
+        "startingWeight": 135,
         "increment": null,
         "loadLabel": null,
         "notes": null
@@ -19,8 +20,9 @@ public enum ProgramContractRules {
     }]
   }
   Keep units in pounds. Reuse a stable readable exercise key for the same lift; a new name is a rename.
-  New weighted exercises need a startingWeight. Do not include startingWeight for existing keys; the app
-  keeps their working weights. Use loadKind bodyweight for exercises without a working weight. Missing
-  exercise keys retire those exercises. Include every workout and item in order.
+  New weighted exercises need startingWeight. Do not include startingWeight for an existing active key;
+  its working weight carries over. For a retired key being restored, the app carries its old weight.
+  A change from bodyweight to weight needs a startingWeight; a change from weight to bodyweight omits it.
+  Missing exercise keys retire the exercise. Include all workouts and items in order.
   """
 }

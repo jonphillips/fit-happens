@@ -46,54 +46,74 @@ public struct ProgramExercise: Codable, Equatable, Sendable {
 }
 
 public enum ProgramContractMarker {
-  public static let identifier = "FH-PROGRAM-1"
+  public static let identifier = "FH-PROGRAM: v1"
   public static let handoffMarker = HandoffContractMarker(prefix: "FH-PROGRAM", version: "v1")
 }
 
+public struct DecodedProgram: Equatable, Sendable {
+  public var contract: ProgramContract
+  public var warning: String?
+
+  public init(contract: ProgramContract, warning: String?) {
+    self.contract = contract
+    self.warning = warning
+  }
+}
+
 public enum ProgramContractError: Error, Equatable, Sendable {
-  case missingMarker
   case unsupportedMarker(String)
-  case malformedJSON
+  case malformedJSON(path: String, reason: String)
   case emptyWorkouts
-  case emptyKey
+  case emptyWorkout(String)
+  case emptyWorkoutKey
+  case emptyExerciseKey
+  case emptyExerciseName(String)
+  case emptyPrescription(String)
   case duplicateWorkoutKey(String)
-  case duplicateExerciseKey(String)
+  case duplicateExerciseKey(workout: String, exercise: String)
   case conflictingExerciseDefinition(String)
   case missingStartingWeight(String)
   case bodyweightHasStartingWeight(String)
   case invalidWeight(String)
+  case invalidIncrement(String)
   case existingExerciseHasStartingWeight(String)
+  case loadKindChangedWithoutWeight(String)
 }
 
 public enum ProgramContractDecoder {
-  public static func decode(_ text: String) throws -> ProgramContract {
-    var lines = text.components(separatedBy: .newlines)
-    guard let markerIndex = lines.firstIndex(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty })
-    else { throw ProgramContractError.missingMarker }
-    let suppliedMarker = lines[markerIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-    guard suppliedMarker == ProgramContractMarker.identifier else {
-      if suppliedMarker.hasPrefix("FH-PROGRAM-") {
-        throw ProgramContractError.unsupportedMarker(suppliedMarker)
-      }
-      throw ProgramContractError.missingMarker
-    }
-    // LLMHandoffKit owns the marker version check. Normalize the app's stable
-    // compact identifier to the package's prefix/version marker spelling first.
-    lines[markerIndex] = ProgramContractMarker.handoffMarker.marker
+  public static func decode(_ text: String) throws -> DecodedProgram {
     let marked: HandoffContractResult
     do {
-      marked = try ProgramContractMarker.handoffMarker.strippingMarker(from: lines.joined(separator: "\n"))
-    } catch {
-      throw ProgramContractError.unsupportedMarker(suppliedMarker)
+      marked = try ProgramContractMarker.handoffMarker.strippingMarker(from: text)
+    } catch let HandoffContractError.unsupportedMarker(found, _) {
+      throw ProgramContractError.unsupportedMarker(found)
     }
+    let json = try extractJSONObject(from: marked.text)
     do {
-      let contract = try JSONDecoder().decode(ProgramContract.self, from: Data(marked.text.utf8))
+      let contract = try JSONDecoder().decode(ProgramContract.self, from: Data(json.utf8))
       try validateShape(contract)
-      return contract
+      let warning = marked.warning.map { _ in
+        "The program marker was missing or older than FH-PROGRAM: v1. Confirm this is the intended program."
+      }
+      return DecodedProgram(contract: contract, warning: warning)
     } catch let error as ProgramContractError {
       throw error
+    } catch let error as DecodingError {
+      let context: DecodingError.Context
+      let path: String
+      switch error {
+      case let .typeMismatch(_, value), let .valueNotFound(_, value), let .dataCorrupted(value):
+        context = value
+        path = formatPath(value.codingPath)
+      case let .keyNotFound(key, value):
+        context = value
+        path = formatPath(value.codingPath + [key])
+      @unknown default:
+        throw ProgramContractError.malformedJSON(path: "$", reason: "The JSON could not be decoded.")
+      }
+      throw ProgramContractError.malformedJSON(path: path, reason: context.debugDescription)
     } catch {
-      throw ProgramContractError.malformedJSON
+      throw ProgramContractError.malformedJSON(path: "$", reason: String(describing: error))
     }
   }
 
@@ -103,16 +123,26 @@ public enum ProgramContractDecoder {
     var exerciseDefinitions: [String: ProgramExercise] = [:]
     for workout in contract.workouts {
       guard !workout.key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-        throw ProgramContractError.emptyKey
+        throw ProgramContractError.emptyWorkoutKey
       }
       guard workoutKeys.insert(workout.key).inserted else {
         throw ProgramContractError.duplicateWorkoutKey(workout.key)
       }
+      guard !workout.items.isEmpty else { throw ProgramContractError.emptyWorkout(workout.key) }
+      var itemKeys = Set<String>()
       for item in workout.items {
-        guard !item.key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              !item.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              !item.prescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else { throw ProgramContractError.emptyKey }
+        guard !item.key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+          throw ProgramContractError.emptyExerciseKey
+        }
+        guard !item.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+          throw ProgramContractError.emptyExerciseName(item.key)
+        }
+        guard !item.prescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+          throw ProgramContractError.emptyPrescription(item.key)
+        }
+        guard itemKeys.insert(item.key).inserted else {
+          throw ProgramContractError.duplicateExerciseKey(workout: workout.key, exercise: item.key)
+        }
         if let previous = exerciseDefinitions[item.key],
            previous.name != item.name || previous.loadKind != item.loadKind
              || previous.increment != item.increment || previous.loadLabel != item.loadLabel
@@ -126,9 +156,86 @@ public enum ProgramContractDecoder {
         if item.loadKind == .bodyweight, item.startingWeight != nil {
           throw ProgramContractError.bodyweightHasStartingWeight(item.key)
         }
+        if let increment = item.increment, !increment.isFinite || increment <= 0 {
+          throw ProgramContractError.invalidIncrement(item.key)
+        }
       }
     }
   }
+
+  private static func extractJSONObject(from text: String) throws -> String {
+    let source = try fencedSource(in: text)
+    guard let opening = source.firstIndex(of: "{") else {
+      throw ProgramContractError.malformedJSON(path: "$", reason: "No JSON object was found.")
+    }
+    return try matchingObject(in: source, startingAt: opening)
+  }
+
+  private static func fencedSource(in text: String) throws -> String {
+    let lines = text.components(separatedBy: .newlines)
+    let fences = lines.indices.filter { lines[$0].trimmingCharacters(in: .whitespaces).hasPrefix("```") }
+    guard !fences.isEmpty else {
+      return text
+    }
+    guard fences.count == 2, fences[1] > fences[0] else {
+      throw ProgramContractError.malformedJSON(path: "$", reason: "Expected one fenced JSON block.")
+    }
+    let opening = lines[fences[0]].trimmingCharacters(in: .whitespaces)
+    let closing = lines[fences[1]].trimmingCharacters(in: .whitespaces)
+    let language = opening.dropFirst(3).trimmingCharacters(in: .whitespaces)
+    let validLanguage = language.isEmpty || language.allSatisfy {
+      $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_"
+    }
+    guard closing == "```", validLanguage else {
+      throw ProgramContractError.malformedJSON(path: "$", reason: "The fenced block is not a single JSON block.")
+    }
+    return lines[(fences[0] + 1)..<fences[1]].joined(separator: "\n")
+  }
+
+  private static func matchingObject(in source: String, startingAt opening: String.Index) throws -> String {
+    var depth = 0
+    var inString = false
+    var escaped = false
+    for index in source.indices[opening...] {
+      let character = source[index]
+      if inString {
+        if escaped {
+          escaped = false
+        } else if character == "\\" {
+          escaped = true
+        } else if character == "\"" {
+          inString = false
+        }
+        continue
+      }
+      if character == "\"" {
+        inString = true
+      } else if character == "{" {
+        depth += 1
+      } else if character == "}" {
+        depth -= 1
+        if depth == 0 {
+          return String(source[opening...index])
+        }
+      }
+    }
+    throw ProgramContractError.malformedJSON(path: "$", reason: "The JSON object is incomplete.")
+  }
+
+  private static func formatPath(_ codingPath: [any CodingKey]) -> String {
+    codingPath.reduce(into: "") { path, key in
+      if let index = key.intValue {
+        path += "[\(index)]"
+      } else {
+        if !path.isEmpty { path += "." }
+        path += key.stringValue
+      }
+    }.nilIfEmpty ?? "$"
+  }
+}
+
+private extension String {
+  var nilIfEmpty: String? { isEmpty ? nil : self }
 }
 
 public struct CurrentExercise: Equatable, Sendable {
@@ -167,11 +274,17 @@ public struct CurrentWorkout: Equatable, Sendable {
 }
 
 public struct CurrentProgram: Equatable, Sendable {
+  /// Only currently prescribed exercises.
   public var exercises: [CurrentExercise]
+  /// Retired exercises are separate so they can be restored without being retired again.
+  public var retiredExercises: [CurrentExercise]
   public var workouts: [CurrentWorkout]
 
-  public init(exercises: [CurrentExercise], workouts: [CurrentWorkout]) {
+  public init(
+    exercises: [CurrentExercise], retiredExercises: [CurrentExercise] = [], workouts: [CurrentWorkout]
+  ) {
     self.exercises = exercises
+    self.retiredExercises = retiredExercises
     self.workouts = workouts
   }
 }
@@ -182,11 +295,10 @@ public struct ProgramRename: Equatable, Sendable {
   public var newName: String
 }
 
-public struct PrescriptionChange: Equatable, Sendable {
-  public var workoutKey: String
+public struct LoadKindChange: Equatable, Sendable {
   public var exerciseKey: String
-  public var oldPrescription: String?
-  public var newPrescription: String
+  public var oldKind: LoadKind
+  public var newKind: LoadKind
 }
 
 public struct WeightCarryover: Equatable, Sendable {
@@ -194,107 +306,162 @@ public struct WeightCarryover: Equatable, Sendable {
   public var load: Load
 }
 
+public struct ProgramItemAddition: Equatable, Sendable {
+  public var exerciseKey: String
+  public var prescription: String
+}
+
+public struct WorkoutMembershipChange: Equatable, Sendable {
+  public var workoutKey: String
+  public var addedItems: [ProgramItemAddition]
+  public var removedExerciseKeys: [String]
+  public var prescriptionChanges: [PrescriptionChange]
+  public var orderChanged: Bool
+}
+
+public struct PrescriptionChange: Equatable, Sendable {
+  public var workoutKey: String
+  public var exerciseKey: String
+  public var oldPrescription: String
+  public var newPrescription: String
+}
+
 public struct ProgramChangeSet: Equatable, Sendable {
   public var addedExercises: [ProgramExercise]
   public var retiredExerciseKeys: [String]
+  public var restoredExerciseKeys: [String]
   public var renames: [ProgramRename]
-  public var prescriptionChanges: [PrescriptionChange]
+  public var loadKindChanges: [LoadKindChange]
+  public var addedWorkouts: [ProgramWorkout]
+  public var removedWorkoutKeys: [String]
+  public var workoutChanges: [WorkoutMembershipChange]
   public var workoutOrderChanged: Bool
-  public var exerciseOrderChanges: [String]
   public var carriedWeights: [WeightCarryover]
-
-  public init(
-    addedExercises: [ProgramExercise], retiredExerciseKeys: [String],
-    renames: [ProgramRename], prescriptionChanges: [PrescriptionChange],
-    workoutOrderChanged: Bool, exerciseOrderChanges: [String], carriedWeights: [WeightCarryover]
-  ) {
-    self.addedExercises = addedExercises
-    self.retiredExerciseKeys = retiredExerciseKeys
-    self.renames = renames
-    self.prescriptionChanges = prescriptionChanges
-    self.workoutOrderChanged = workoutOrderChanged
-    self.exerciseOrderChanges = exerciseOrderChanges
-    self.carriedWeights = carriedWeights
-  }
 }
 
 public enum ProgramChanges {
+  private struct WorkoutChanges {
+    var added: [ProgramWorkout]
+    var removed: [String]
+    var memberships: [WorkoutMembershipChange]
+    var orderChanged: Bool
+  }
+
   private struct ExerciseChanges {
-    var added: [ProgramExercise]
-    var retired: [String]
-    var renames: [ProgramRename]
-    var carried: [WeightCarryover]
+    var added: [ProgramExercise] = []
+    var retired: [String] = []
+    var restored: [String] = []
+    var renames: [ProgramRename] = []
+    var kindChanges: [LoadKindChange] = []
+    var carried: [WeightCarryover] = []
   }
 
   public static func make(current: CurrentProgram, proposal: ProgramContract) throws -> ProgramChangeSet {
     try ProgramContractDecoder.validateShape(proposal)
-    let exercises = try exerciseChanges(current: current, proposal: proposal)
-    let prescriptions = prescriptionChanges(current: current, proposal: proposal)
+    let exerciseChanges = try reconcileExercises(current: current, proposal: proposal)
+    let workoutChanges = makeWorkoutChanges(current: current.workouts, proposal: proposal.workouts)
     return ProgramChangeSet(
-      addedExercises: exercises.added.sorted { $0.key < $1.key },
-      retiredExerciseKeys: exercises.retired.sorted(),
-      renames: exercises.renames.sorted { $0.key < $1.key },
-      prescriptionChanges: prescriptions.changes,
-      workoutOrderChanged: current.workouts.map(\.key) != proposal.workouts.map(\.key),
-      exerciseOrderChanges: prescriptions.reorderedWorkouts,
-      carriedWeights: exercises.carried.sorted { $0.exerciseKey < $1.exerciseKey }
+      addedExercises: exerciseChanges.added.sorted { $0.key < $1.key },
+      retiredExerciseKeys: exerciseChanges.retired.sorted(),
+      restoredExerciseKeys: exerciseChanges.restored.sorted(),
+      renames: exerciseChanges.renames.sorted { $0.key < $1.key },
+      loadKindChanges: exerciseChanges.kindChanges.sorted { $0.exerciseKey < $1.exerciseKey },
+      addedWorkouts: workoutChanges.added,
+      removedWorkoutKeys: workoutChanges.removed,
+      workoutChanges: workoutChanges.memberships,
+      workoutOrderChanged: workoutChanges.orderChanged,
+      carriedWeights: exerciseChanges.carried.sorted { $0.exerciseKey < $1.exerciseKey }
     )
   }
 
-  private static func exerciseChanges(
+  private static func reconcileExercises(
     current: CurrentProgram, proposal: ProgramContract
   ) throws -> ExerciseChanges {
-    var existing: [String: CurrentExercise] = [:]
-    for exercise in current.exercises { existing[exercise.key] = exercise }
+    var active: [String: CurrentExercise] = [:]
+    var retired: [String: CurrentExercise] = [:]
+    for exercise in current.exercises { active[exercise.key] = exercise }
+    for exercise in current.retiredExercises { retired[exercise.key] = exercise }
     var proposed: [String: ProgramExercise] = [:]
     for item in proposal.workouts.flatMap(\.items) where proposed[item.key] == nil {
       proposed[item.key] = item
     }
-    var changes = ExerciseChanges(added: [], retired: [], renames: [], carried: [])
+    var changes = ExerciseChanges()
     for item in proposed.values {
-      guard let old = existing[item.key] else {
+      let old = active[item.key]
+      let restoring = retired[item.key]
+      guard let previous = old ?? restoring else {
         if item.loadKind == .weight, item.startingWeight == nil {
           throw ProgramContractError.missingStartingWeight(item.key)
         }
         changes.added.append(item)
         continue
       }
-      guard item.startingWeight == nil else {
-        throw ProgramContractError.existingExerciseHasStartingWeight(item.key)
+      if restoring != nil { changes.restored.append(item.key) }
+      if previous.loadKind == item.loadKind {
+        if old != nil, item.startingWeight != nil {
+          throw ProgramContractError.existingExerciseHasStartingWeight(item.key)
+        }
+        if let load = previous.load { changes.carried.append(.init(exerciseKey: item.key, load: load)) }
+      } else {
+        if item.loadKind == .weight, item.startingWeight == nil {
+          throw ProgramContractError.loadKindChangedWithoutWeight(item.key)
+        }
+        changes.kindChanges.append(.init(
+          exerciseKey: item.key, oldKind: previous.loadKind, newKind: item.loadKind
+        ))
       }
-      if old.loadKind == item.loadKind, let load = old.load {
-        changes.carried.append(.init(exerciseKey: item.key, load: load))
-      }
-      if old.name != item.name {
-        changes.renames.append(.init(key: item.key, oldName: old.name, newName: item.name))
+      if previous.name != item.name {
+        changes.renames.append(.init(key: item.key, oldName: previous.name, newName: item.name))
       }
     }
-    changes.retired = current.exercises
-      .filter { proposed[$0.key] == nil }
-      .map(\.key)
+    changes.retired = current.exercises.filter { proposed[$0.key] == nil }.map(\.key)
     return changes
   }
 
-  private static func prescriptionChanges(
-    current: CurrentProgram, proposal: ProgramContract
-  ) -> (changes: [PrescriptionChange], reorderedWorkouts: [String]) {
-    var oldByKey: [String: CurrentWorkout] = [:]
-    for workout in current.workouts { oldByKey[workout.key] = workout }
-    var changes: [PrescriptionChange] = []
-    var reorderedWorkouts: [String] = []
-    for workout in proposal.workouts {
-      let old = oldByKey[workout.key]
-      if let old, old.exerciseKeys != workout.items.map(\.key) {
-        reorderedWorkouts.append(workout.key)
+  private static func makeWorkoutChanges(
+    current: [CurrentWorkout], proposal: [ProgramWorkout]
+  ) -> WorkoutChanges {
+    var existing: [String: CurrentWorkout] = [:]
+    for workout in current { existing[workout.key] = workout }
+    let proposedKeys = Set(proposal.map(\.key))
+    let currentKeys = Set(current.map(\.key))
+    let added = proposal.filter { !currentKeys.contains($0.key) }
+    let removed = current.filter { !proposedKeys.contains($0.key) }.map(\.key)
+    let currentCommonOrder = current.map(\.key).filter { proposedKeys.contains($0) }
+    let proposedCommonOrder = proposal.map(\.key).filter { currentKeys.contains($0) }
+    var memberships: [WorkoutMembershipChange] = []
+    for workout in proposal {
+      guard let old = existing[workout.key] else { continue }
+      let oldKeys = old.exerciseKeys
+      let newKeys = workout.items.map(\.key)
+      let oldSet = Set(oldKeys)
+      let newSet = Set(newKeys)
+      let additions = workout.items.filter { !oldSet.contains($0.key) }.map {
+        ProgramItemAddition(exerciseKey: $0.key, prescription: $0.prescription)
       }
-      for item in workout.items {
-        guard let previous = old?.prescriptions[item.key], previous != item.prescription else { continue }
-        changes.append(.init(
+      let removals = oldKeys.filter { !newSet.contains($0) }
+      var prescriptionChanges: [PrescriptionChange] = []
+      for item in workout.items where oldSet.contains(item.key) {
+        guard let oldPrescription = old.prescriptions[item.key], oldPrescription != item.prescription else { continue }
+        prescriptionChanges.append(.init(
           workoutKey: workout.key, exerciseKey: item.key,
-          oldPrescription: previous, newPrescription: item.prescription
+          oldPrescription: oldPrescription, newPrescription: item.prescription
+        ))
+      }
+      let oldCommonOrder = oldKeys.filter { newSet.contains($0) }
+      let newCommonOrder = newKeys.filter { oldSet.contains($0) }
+      if !additions.isEmpty || !removals.isEmpty || !prescriptionChanges.isEmpty
+        || oldCommonOrder != newCommonOrder {
+        memberships.append(.init(
+          workoutKey: workout.key, addedItems: additions,
+          removedExerciseKeys: removals, prescriptionChanges: prescriptionChanges,
+          orderChanged: oldCommonOrder != newCommonOrder
         ))
       }
     }
-    return (changes, reorderedWorkouts)
+    return WorkoutChanges(
+      added: added, removed: removed, memberships: memberships,
+      orderChanged: currentCommonOrder != proposedCommonOrder
+    )
   }
 }

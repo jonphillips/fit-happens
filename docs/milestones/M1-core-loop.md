@@ -16,7 +16,7 @@ and see the other workout come up next, on a CloudKit-synced SQLiteData store.
 
 Set in S0 and permanent after the first CloudKit write: bundle ID `com.jonphillips.fithappens`,
 CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappensCore`, contract marker
-`FH-PROGRAM-1`. They follow the pattern of Yes Chef and Galavant.
+`FH-PROGRAM: v1`. They follow the pattern of Yes Chef and Galavant.
 
 ## Slices
 
@@ -24,10 +24,12 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
   SwiftLint, git hooks, and `scripts/check-drift.sh` per jon-platform `drift-control.md`. SQLiteData with CloudSyncKit wired to the private database (ADR-0001
   D2). Fill in [verification.md](../verification.md) with the real gate. An empty launch screen is fine.
 - [ ] **S1 — Schema and the program contract (Core, no UI).** The tables of ADR-0002 D1 and ADR-0003 D1
-  as one migration, following `persistence-and-sync.md`. The `Load` enum. The `FH-PROGRAM-1` decoder
-  with typed errors a model can act on, the rules constant (ADR-0002 D2), and a pure function from
-  (current program, proposal) to a **change set**: added, retired, renamed, prescription changes,
-  reorder, carried weights. Apply = reconcile by key plus a `programRevisions` row. Rotation and
+  as one migration, following `persistence-and-sync.md`. The `Load` enum. The `FH-PROGRAM: v1` decoder
+  with actionable coding-path errors, the rules constant (ADR-0002 D2), and a pure function from
+  (current program, proposal) to a **change set**: added, retired, restored, renamed, load-kind
+  changes, per-workout membership/prescription/order changes, and carried weights. Apply = reconcile
+  exercises, workouts, and workout items by stable identity, then add a `programRevisions` row in one
+  write transaction. Rotation and
   completion as pure functions (ADR-0003 D2, D3). Fixture-driven tests, including a fixture converted
   from the real Markdown program.
 - [ ] **S2 — Next Workout.** The launch screen of PRODUCT.md § 1: next workout and last-done date,
