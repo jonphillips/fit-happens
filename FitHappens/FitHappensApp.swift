@@ -19,8 +19,7 @@ struct FitHappensApp: App {
 
   var body: some Scene {
     WindowGroup {
-      Text("Fit Happens")
-        .font(.title)
+      WorkoutScreen()
     }
   }
 }
