@@ -59,7 +59,7 @@ the scale too, so readings are matched to Jon by weight band, and borderline one
 3. **Chat access.** Read tools and `propose_program` over the MCP tunnel (ADR-0002, jon-platform ADR-0007).
 4. **Scale.** The Mac listener and body-mass writes (ADR-0005). Waits on buying a suitable scale.
 
-The order of 2 and 3 is open ([open-questions.md](open-questions.md)).
+Health comes before chat access (Jon, 2026-11-16): it pays off every day.
 
 ## Non-goals
 

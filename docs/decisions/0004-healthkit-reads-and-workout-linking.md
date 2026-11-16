@@ -19,7 +19,7 @@ which reverses a non-goal and would be the biggest piece of the app. Jon chose l
 ### D1 — Permissions
 
 - **Read:** workouts, walking + running distance, body mass.
-- **Write:** body mass only, for the scale (ADR-0005).
+- **Write:** body mass only, for the scale (ADR-0005), requested when the scale arrives, not before.
 - Nothing else: no sleep, HRV, VO₂ max, energy, or rings.
 
 ### D2 — Queries
@@ -33,14 +33,20 @@ which reverses a non-goal and would be the biggest piece of the app. Jon chose l
 
 ### D3 — Linking the Watch workout
 
-When the app comes forward and Health has a strength workout that ended in the last 12 hours, after
-the latest completion, and isn't linked to one, the Next Workout screen offers: "48-minute strength
-workout at 7:10 — mark Workout A done?" Accepting completes with completed-at set to the workout's
-end and stores its UUID. Declining hides the offer for that workout. Completing by hand stays
-available and never requires Health.
+When the app comes forward and Health has a strength workout that ended in the last 12 hours,
+started after the latest completion, and isn't linked to one, the Next Workout screen offers:
+"48-minute strength workout at 7:10 — mark Workout A done?" Accepting completes with completed-at
+set to the workout's end and stores its UUID. Declining hides the offer for that workout. Completing
+by hand stays available and never requires Health.
 
-The Activity calendar counts a day as a strength day if it has a completion or a linked workout,
-not both.
+The Activity calendar counts a day as a strength day if it has a completion or any Health strength
+workout; a day is marked once, however many it has.
+
+*Amended 2026-11-16, while designing M2:* "started after", not "ended after". Tapping Complete by hand
+during or just before ending the Watch session would otherwise leave that workout ending after the
+completion, and the app would offer to mark the *following* workout done. An unlinked Health
+strength workout (a class, a session off-program) now counts as a strength day too. "What have I been
+doing" includes it, and the old "not both" only guarded against counting a day twice.
 
 ### D4 — Unknown access
 
