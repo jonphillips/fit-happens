@@ -3,6 +3,12 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-16 — Health access and Watch workout linking (`m2/s1-health-workout-linking`)
+
+- **Result:** Added HealthKit read access, an injectable HealthClient, recent Watch workout matching, and the offer to link an eligible workout to a completion.
+- **Verification:** scripts/check-drift.sh passed: 29 Core tests, strict SwiftLint, and the iOS Simulator build.
+- **Owed:** M2 S1, M2 S2's device gate, in [device-passes.md](device-passes.md).
+
 ## 2026-11-16 — M1 S3 — Program import and review (`m1/s3-program-import-review`)
 
 - **Result:** Added paste import, a review of proposed program changes, ChatGPT instructions copying, and review-based reapplication of accepted revisions.

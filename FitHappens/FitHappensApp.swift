@@ -8,6 +8,7 @@ struct FitHappensApp: App {
     UserDefaults.standard.register(defaults: [FitHappensCloudSync.configuration.enabledDefaultsKey: true])
     do {
       try prepareDependencies {
+        $0.healthClient = HealthKitClient.live
         try $0.bootstrapDatabase()
       }
     } catch {

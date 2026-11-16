@@ -22,7 +22,7 @@ ADR-0005) arrives with the scale, and asks then.
 
 ## Slices
 
-- [ ] **S1 — Health access.** The HealthKit capability and usage string. A `HealthClient` dependency
+- [x] **S1 — Health access.** The HealthKit capability and usage string. A `HealthClient` dependency
   (ADR-0004 D2): request read authorization for workouts, walking + running distance, and body
   mass (D1's reads, nothing else); fetch strength workouts in a window (UUID, start, end); fetch
   walking workouts in a window (start, end, and distance from each workout's own statistics); fetch
@@ -30,7 +30,7 @@ ADR-0005) arrives with the scale, and asks then.
   pure function of this milestone live in Core; the HealthKit-backed live value lives in the app
   target. Ask for authorization once, when Next Workout first appears; the system shows its sheet
   only the first time. Nothing is cached or stored (ADR-0004 D2, D4).
-- [ ] **S2 — Link the Watch workout.** The offer of ADR-0004 D3 on Next Workout, checked whenever the
+- [x] **S2 — Link the Watch workout.** The offer of ADR-0004 D3 on Next Workout, checked whenever the
   app becomes active. A pure Core function picks the candidate: a strength workout that **started**
   after the latest completion (ADR-0004 D3, amended), ended in the last 12 hours, isn't any
   completion's `healthWorkoutID`, and wasn't declined; the most recent one wins. The offer names its

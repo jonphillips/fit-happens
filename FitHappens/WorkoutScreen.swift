@@ -3,6 +3,7 @@ import SwiftUI
 
 struct WorkoutScreen: View {
   @State private var model = WorkoutScreenModel()
+  @Environment(\.scenePhase) private var scenePhase
 
   var body: some View {
     NavigationStack {
@@ -18,6 +19,12 @@ struct WorkoutScreen: View {
         }
         .sheet(item: $model.destination) { destination in
           presentedScreen(for: destination)
+        }
+        .task(id: scenePhase) {
+          guard scenePhase == .active else {
+            return
+          }
+          await model.screenAppeared()
         }
     }
   }
@@ -51,6 +58,20 @@ struct WorkoutScreen: View {
     List {
       WorkoutSummaryRow(overview: overview)
 
+      if let candidate = model.healthWorkoutCandidate {
+        HealthWorkoutOffer(
+          workout: candidate,
+          nextWorkoutKey: overview.workoutKey,
+          accept: model.acceptHealthWorkoutButtonTapped,
+          decline: model.declineHealthWorkoutButtonTapped
+        )
+      } else if model.healthReadFailed {
+        Section {
+          Text("Health data couldn’t be loaded.")
+            .foregroundStyle(.secondary)
+        }
+      }
+
       Section("Exercises") {
         ForEach(Array(overview.exercises.enumerated()), id: \.element.id) { index, exercise in
           ExerciseRow(
@@ -63,6 +84,39 @@ struct WorkoutScreen: View {
       }
 
       CompleteWorkoutRow(action: model.completeWorkoutButtonTapped)
+    }
+  }
+}
+
+private struct HealthWorkoutOffer: View {
+  var workout: HealthWorkout
+  var nextWorkoutKey: String
+  var accept: () -> Void
+  var decline: () -> Void
+
+  private var durationMinutes: Int {
+    Int((workout.end.timeIntervalSince(workout.start) / 60).rounded())
+  }
+
+  private var startTime: String {
+    workout.start.formatted(date: .omitted, time: .shortened)
+  }
+
+  var body: some View {
+    Section {
+      VStack(alignment: .leading, spacing: 12) {
+        Text("\(durationMinutes)-minute strength workout at \(startTime) — mark Workout \(nextWorkoutKey) done?")
+          .font(.headline)
+        HStack {
+          Button("Mark done", systemImage: "checkmark.circle.fill", action: accept)
+            .buttonStyle(.borderedProminent)
+          Button("Not this one", action: decline)
+            .buttonStyle(.bordered)
+        }
+      }
+      .padding(.vertical, 4)
+    } header: {
+      Text("Watch Workout")
     }
   }
 }

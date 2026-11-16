@@ -39,6 +39,7 @@ public enum WorkoutHistoryOperations {
     workoutKey: String,
     at completedAt: Date,
     completionID: UUID,
+    healthWorkoutID: UUID? = nil,
     makeID: () -> UUID,
     in database: Database
   ) throws -> WorkoutCompletionSnapshot {
@@ -59,7 +60,7 @@ public enum WorkoutHistoryOperations {
       .canonicalExerciseRows(exerciseRows)
       .filter { !$0.isRetired }
       .map { ($0.key, $0.id) })
-    try save(snapshot, exerciseIDsByKey: exerciseIDsByKey, in: database)
+    try save(snapshot, exerciseIDsByKey: exerciseIDsByKey, healthWorkoutID: healthWorkoutID, in: database)
     return snapshot
   }
 
@@ -72,10 +73,14 @@ public enum WorkoutHistoryOperations {
   }
 
   private static func save(
-    _ snapshot: WorkoutCompletionSnapshot, exerciseIDsByKey: [String: Exercise.ID], in database: Database
+    _ snapshot: WorkoutCompletionSnapshot,
+    exerciseIDsByKey: [String: Exercise.ID],
+    healthWorkoutID: UUID?,
+    in database: Database
   ) throws {
     let completion = Completion(
-      id: snapshot.id, workoutKey: snapshot.workoutKey, completedAt: snapshot.completedAt
+      id: snapshot.id, workoutKey: snapshot.workoutKey, completedAt: snapshot.completedAt,
+      healthWorkoutID: healthWorkoutID
     )
     try Completion.insert { Completion.Draft(completion) }.execute(database)
     let rows = try snapshot.items.map { item -> CompletionItem.Draft in
