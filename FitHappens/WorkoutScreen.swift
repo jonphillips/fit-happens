@@ -21,7 +21,9 @@ struct WorkoutScreen: View {
           presentedScreen(for: destination)
         }
         .task(id: scenePhase) {
-          guard scenePhase == .active else { return }
+          guard scenePhase == .active else {
+            return
+          }
           await model.screenAppeared()
         }
     }
@@ -99,7 +101,8 @@ private struct HealthWorkoutOffer: View {
   var body: some View {
     Section {
       VStack(alignment: .leading, spacing: 12) {
-        Text("\(durationMinutes)-minute strength workout at \(workout.start, format: .dateTime.hour().minute()) — mark Workout \(nextWorkoutKey) done?")
+        Text("\(durationMinutes)-minute strength workout at \(workout.start, format: .dateTime.hour().minute()) — \
+          mark Workout \(nextWorkoutKey) done?")
           .font(.headline)
         HStack {
           Button("Mark done", systemImage: "checkmark.circle.fill", action: accept)

@@ -74,7 +74,9 @@ final class WorkoutScreenModel {
   }
 
   func acceptHealthWorkoutButtonTapped() {
-    guard let candidate = healthWorkoutCandidate, let overview else { return }
+    guard let candidate = healthWorkoutCandidate, let overview else {
+      return
+    }
     let result = withErrorReporting {
       try database.write { database in
         try WorkoutHistoryOperations.complete(
@@ -93,7 +95,9 @@ final class WorkoutScreenModel {
   }
 
   func declineHealthWorkoutButtonTapped() {
-    guard let candidate = healthWorkoutCandidate else { return }
+    guard let candidate = healthWorkoutCandidate else {
+      return
+    }
     var declined = declinedWorkoutEndDates()
     declined[candidate.id.uuidString] = candidate.end.timeIntervalSince1970
     UserDefaults.standard.set(declined, forKey: Self.declinedWorkoutsKey)

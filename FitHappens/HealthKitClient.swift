@@ -17,7 +17,9 @@ private actor HealthStore {
   private let store = HKHealthStore()
 
   func requestReadAuthorization() async throws {
-    guard HKHealthStore.isHealthDataAvailable() else { return }
+    guard HKHealthStore.isHealthDataAvailable() else {
+      return
+    }
     let distance = HKQuantityType(.distanceWalkingRunning)
     let bodyMass = HKQuantityType(.bodyMass)
     try await store.requestAuthorization(
@@ -57,7 +59,9 @@ private actor HealthStore {
       sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)],
       limit: 1
     )
-    guard let sample = try await descriptor.result(for: store).first else { return nil }
+    guard let sample = try await descriptor.result(for: store).first else {
+      return nil
+    }
     return HealthBodyMass(pounds: sample.quantity.doubleValue(for: .pound()), date: sample.endDate)
   }
 
