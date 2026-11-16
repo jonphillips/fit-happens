@@ -1,0 +1,14 @@
+#!/bin/sh
+[ -f project.yml ] || exit 0
+if ! command -v xcodegen >/dev/null 2>&1; then
+  echo "xcodegen-sync: xcodegen not found — install it with 'brew install xcodegen', then run 'xcodegen generate'." >&2
+  exit 0
+fi
+if ! xcodegen generate --use-cache --quiet; then
+  echo "xcodegen-sync: 'xcodegen generate' failed — fix project.yml and run it by hand." >&2
+  exit 0
+fi
+if [ -n "$(git status --porcelain -- '*.xcodeproj')" ]; then
+  echo "xcodegen-sync: regenerating changed the committed Xcode project — review the generated project." >&2
+fi
+exit 0

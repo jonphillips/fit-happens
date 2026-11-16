@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs>
+<linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#b4a58d"/><stop offset=".25" stop-color="#616974"/>
+<stop offset=".57" stop-color="#263647"/><stop offset=".82" stop-color="#536b7f"/>
+<stop offset="1" stop-color="#15263b"/></linearGradient>
+<radialGradient id="face" cx=".28" cy=".2" r=".95">
+<stop offset="0" stop-color="#414b56"/><stop offset=".52" stop-color="#273544"/>
+<stop offset="1" stop-color="#192839"/></radialGradient>
+<linearGradient id="hole" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#929aa1"/><stop offset=".43" stop-color="#445363"/><stop offset="1" stop-color="#1c2c3b"/></linearGradient>
+</defs>
+<!-- Outer face with true transparent opening. All geometry is centered on a 1024px artboard. -->
+<path d="M 801 559 A 354 354 0 1 0 93 559 A 354 354 0 1 0 801 559 Z M 514 559 A 67 67 0 1 0 380 559 A 67 67 0 1 0 514 559 Z" fill-rule="evenodd" fill="url(#rim)"/>
+<path d="M 776 559 A 329 329 0 1 0 118 559 A 329 329 0 1 0 776 559 Z M 514 559 A 67 67 0 1 0 380 559 A 67 67 0 1 0 514 559 Z" fill-rule="evenodd" fill="url(#face)"/>
+<circle cx="447" cy="559" r="327" fill="none" stroke="#a4b4be" stroke-width="5" opacity=".5"/>
+<circle cx="447" cy="559" r="297" fill="none" stroke="#121e2c" stroke-width="14" opacity=".75"/>
+<circle cx="447" cy="559" r="284" fill="none" stroke="#718091" stroke-width="3" opacity=".26"/>
+<path d="M 200 309 A 354 354 0 0 1 449 205" fill="none" stroke="#d6c8b0" stroke-width="10" opacity=".38"/>
+<path d="M 797.55 608.27 A 354 354 0 0 1 639.80 855.89" fill="none" stroke="#739fbc" stroke-width="7" opacity=".25"/>
+<g transform="translate(639.3 366.7) rotate(45)">
+<rect x="-37" y="-58" width="74" height="116" rx="33" fill="#77818a" opacity=".63"/>
+<rect x="-32" y="-53" width="64" height="106" rx="29" fill="#0d1a2a"/>
+<path d="M -20 -44 Q 0 -53 20 -44" stroke="#8295a4" stroke-width="3" opacity=".50" fill="none"/>
+</g><g transform="translate(639.3 751.3) rotate(135)">
+<rect x="-37" y="-58" width="74" height="116" rx="33" fill="#77818a" opacity=".63"/>
+<rect x="-32" y="-53" width="64" height="106" rx="29" fill="#0d1a2a"/>
+<path d="M -20 -44 Q 0 -53 20 -44" stroke="#8295a4" stroke-width="3" opacity=".50" fill="none"/>
+</g><g transform="translate(254.7 751.3) rotate(225)">
+<rect x="-37" y="-58" width="74" height="116" rx="33" fill="#77818a" opacity=".63"/>
+<rect x="-32" y="-53" width="64" height="106" rx="29" fill="#0d1a2a"/>
+<path d="M -20 -44 Q 0 -53 20 -44" stroke="#8295a4" stroke-width="3" opacity=".50" fill="none"/>
+</g><g transform="translate(254.7 366.7) rotate(315)">
+<rect x="-37" y="-58" width="74" height="116" rx="33" fill="#77818a" opacity=".63"/>
+<rect x="-32" y="-53" width="64" height="106" rx="29" fill="#0d1a2a"/>
+<path d="M -20 -44 Q 0 -53 20 -44" stroke="#8295a4" stroke-width="3" opacity=".50" fill="none"/>
+</g><!-- Dimensional collar, with the middle intentionally transparent. -->
+<path d="M 551 559 A 104 104 0 1 0 343 559 A 104 104 0 1 0 551 559 Z M 514 559 A 67 67 0 1 0 380 559 A 67 67 0 1 0 514 559 Z" fill-rule="evenodd" fill="url(#hole)" stroke="none"/>
+<circle cx="447" cy="559" r="103" stroke="#a2adb3" stroke-width="4" opacity=".46" fill="none"/>
+<circle cx="447" cy="559" r="67" stroke="#d0bc9a" stroke-width="6" opacity=".68" fill="none"/>
+</svg>

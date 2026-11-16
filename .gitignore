@@ -2,19 +2,28 @@
 xcuserdata/
 *.xcuserstate
 .build/
+.swiftpm/
+*.xcuserstate
+xcuserdata/
 DerivedData/
 
-# Machine-local build credentials. Copy the tracked example, then add the real
-# value locally; the app target reads it through its Info.plist build setting.
-Config/Secrets.xcconfig
+# Generated from project.yml by XcodeGen; keep only the package pins.
+FitHappens.xcodeproj/*
+!FitHappens.xcodeproj/project.xcworkspace/
+FitHappens.xcodeproj/project.xcworkspace/*
+!FitHappens.xcodeproj/project.xcworkspace/xcshareddata/
+FitHappens.xcodeproj/project.xcworkspace/xcshareddata/*
+!FitHappens.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+FitHappens.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/*
+!FitHappens.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+FitHappensCore/Package.resolved
+FitHappens/Info.plist
 
-# Machine-local Claude Code overrides (permissions, sim UUIDs, abs paths).
-# The shared SessionStart hook lives in the committed .claude/settings.json.
+# Machine-local build credentials and agent overrides.
+Config/Secrets.xcconfig
 .claude/settings.local.json
 .claude/jon-platform
-
-# Background-agent worktrees (isolated checkouts, never committed)
 .claude/worktrees/
 
-# Local TestFlight archives, exports, recovery state, and generated notes.
+# Local TestFlight artifacts and exports.
 build/testflight/

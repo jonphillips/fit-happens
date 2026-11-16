@@ -33,15 +33,19 @@ computes on it. Add a duration load kind only when an exercise needs it.
 
 ### D2 — The contract
 
-A versioned block with a `HandoffContractMarker` (LLMHandoffKit), named `FH-PROGRAM-1`,
-carrying the whole program: workouts in order, each with its items. Each item names an exercise by
+A versioned block with a `HandoffContractMarker` (LLMHandoffKit), using the marker line
+`FH-PROGRAM: v1`, carrying the whole program: workouts in order, each with its items. Each item names an exercise by
 key, with its name, prescription, load kind, and optional increment, label, and notes. Rules:
 
-- **A known key is the same lift.** A new name is a rename, and the weight carries over.
+- **A known key is the same lift.** A new name is a rename, and the working weight carries over.
+  A retired key that returns is restored and keeps its previous weight.
 - **An unknown key is a new exercise** and must carry a starting weight if it's weighted.
-- **Starting weights only.** The contract can't change an existing exercise's weight; that stays on
-  the stepper. (Jon to confirm, see open-questions.)
+- **Starting weights only.** For a known key whose load kind is unchanged, active or restored, a
+  starting weight is ignored and the working weight carries over; the review shows it as ignored.
+  A load-kind change to `weight` requires a starting weight; a change to `bodyweight` has no weight.
 - **A key that disappears retires the exercise.** It stays in history and is never deleted.
+- Workouts and `workoutItems` are current-program rows. Apply deletes a workout or item that the
+  accepted contract removes; completion snapshots and `programRevisions` remain independent.
 - Any number of workouts is allowed; rotation follows program order (ADR-0003).
 
 The rules live in one Core constant, used for ChatGPT Project instructions (paste path) and for the
@@ -51,8 +55,9 @@ MCP server's `instructions` (jon-platform ADR-0007 D6).
 
 Every proposal, pasted or staged, opens the same review: exercises added, retired, and renamed,
 prescriptions changed, workouts reordered, and which weights carry over. **Apply** is the only write.
-It reconciles by identity (upsert survivors by key, retire the missing) and stores the contract as a
-new `programRevisions` row. Going back to an earlier program re-applies its stored contract through
+It reconciles in one write transaction: upserts exercises and workouts by stable key, retires missing
+exercises, deletes removed current workouts/items, and stores the contract as a new
+`programRevisions` row. Completion snapshots do not reference current-program rows. Going back to an earlier program re-applies its stored contract through
 the same review.
 
 ### D4 — Two ways in, one decoder
