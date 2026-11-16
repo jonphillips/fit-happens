@@ -98,11 +98,14 @@ private struct HealthWorkoutOffer: View {
     Int((workout.end.timeIntervalSince(workout.start) / 60).rounded())
   }
 
+  private var startTime: String {
+    workout.start.formatted(date: .omitted, time: .shortened)
+  }
+
   var body: some View {
     Section {
       VStack(alignment: .leading, spacing: 12) {
-        Text("\(durationMinutes)-minute strength workout at \(workout.start, format: .dateTime.hour().minute()) — \
-          mark Workout \(nextWorkoutKey) done?")
+        Text("\(durationMinutes)-minute strength workout at \(startTime) — mark Workout \(nextWorkoutKey) done?")
           .font(.headline)
         HStack {
           Button("Mark done", systemImage: "checkmark.circle.fill", action: accept)
