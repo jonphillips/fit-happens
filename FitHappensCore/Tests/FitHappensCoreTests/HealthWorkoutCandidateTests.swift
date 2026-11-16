@@ -8,7 +8,7 @@ struct HealthWorkoutCandidateTests {
     let latestCompletion = Date(timeIntervalSince1970: 99_970)
     let now = Date(timeIntervalSince1970: 100_000)
     let startedBeforeButEndedAfter = HealthWorkout(
-      id: healthWorkoutID(1), start: Date(timeIntervalSince1970: 99_960), end: Date(timeIntervalSince1970: 99_980)
+      id: healthWorkoutID(1), start: Date(timeIntervalSince1970: 99_960), end: Date(timeIntervalSince1970: 99_995)
     )
     let startedAfter = HealthWorkout(
       id: healthWorkoutID(2), start: Date(timeIntervalSince1970: 99_971), end: Date(timeIntervalSince1970: 99_990)
@@ -34,15 +34,14 @@ struct HealthWorkoutCandidateTests {
       id: healthWorkoutID(4), start: Date(timeIntervalSince1970: 56_698), end: Date(timeIntervalSince1970: 56_799)
     )
 
-    let candidate = StrengthWorkoutCandidate.pick(
-      from: [outsideWindow, atBoundary],
-      latestCompletionAt: nil,
-      linkedWorkoutIDs: [],
-      declinedWorkoutIDs: [],
-      now: now
-    )
+    func pick(_ workouts: [HealthWorkout]) -> HealthWorkout? {
+      StrengthWorkoutCandidate.pick(
+        from: workouts, latestCompletionAt: nil, linkedWorkoutIDs: [], declinedWorkoutIDs: [], now: now
+      )
+    }
 
-    expectNoDifference(candidate, atBoundary)
+    expectNoDifference(pick([atBoundary]), atBoundary)
+    expectNoDifference(pick([outsideWindow]), nil)
   }
 
   @Test func candidateExcludesLinkedWorkouts() {
