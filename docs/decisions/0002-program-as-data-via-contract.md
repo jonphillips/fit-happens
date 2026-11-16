@@ -31,11 +31,18 @@ exercise can't carry a weight. Working weight is **per exercise**: the same lift
 every workout, and a real variant is a different key. The prescription is display text; nothing
 computes on it. Add a duration load kind only when an exercise needs it.
 
+The increment is optional and defaults to **5 lb** when absent: one named Core constant, applied
+wherever a stepper reads an exercise's increment, never written back to the row. *Amended
+2026-11-16, from the review of #3:* the real program left every weighted lift without an increment,
+so the steppers had nothing to step by. A default keeps the real program importable as-is; a lift
+that moves by something else says so in the contract.
+
 ### D2 — The contract
 
 A versioned block with a `HandoffContractMarker` (LLMHandoffKit), using the marker line
 `FH-PROGRAM: v1`, carrying the whole program: workouts in order, each with its items. Each item names an exercise by
-key, with its name, prescription, load kind, and optional increment, label, and notes. Rules:
+key, with its name, prescription, load kind, and optional increment (5 lb when omitted, D1), label,
+and notes. Rules:
 
 - **A known key is the same lift.** A new name is a rename, and the working weight carries over.
   A retired key that returns is restored and keeps its previous weight.
