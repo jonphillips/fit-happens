@@ -1,7 +1,7 @@
 # Milestone 1 — Core loop
 
 *Status: **Designed** — 2026-11-15. Rules: jon-platform `AGENTS.md` and `docs/ios/`, and this repo's
-[decisions](../decisions/). Where this doc and those conflict, stop and flag it.*
+[decisions](../../decisions/). Where this doc and those conflict, stop and flag it.*
 
 Summary: The app is useful without Health: a program arrives by paste, the Next Workout screen shows
 it with working weights, one tap completes it and advances the rotation, and corrections work. Data
@@ -22,7 +22,7 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
 
 - [x] **S0 — Scaffold.** XcodeGen `project.yml`, an iPhone app target, a `FitHappensCore` Swift package,
   SwiftLint, git hooks, and `scripts/check-drift.sh` per jon-platform `drift-control.md`. SQLiteData with CloudSyncKit wired to the private database (ADR-0001
-  D2). Fill in [verification.md](../verification.md) with the real gate. An empty launch screen is fine.
+  D2). Fill in [verification.md](../../verification.md) with the real gate. An empty launch screen is fine.
 - [x] **S1 — Schema and the program contract (Core, no UI).** The tables of ADR-0002 D1 and ADR-0003 D1
   as one migration, following `persistence-and-sync.md`. The `Load` enum. The `FH-PROGRAM: v1` decoder
   with actionable coding-path errors, the rules constant (ADR-0002 D2), and a pure function from
@@ -39,7 +39,7 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
   there's no program yet, pointing at import. A weighted exercise with no increment steps by the 5 lb
   default (ADR-0002 D1); the rules constant tells ChatGPT to omit `increment` when it's 5 lb. *Amended
   2026-11-16, from the review of #3.*
-- [ ] **S3 — Import and review.** A paste sheet, then the review screen for the change set (ADR-0002
+- [x] **S3 — Import and review.** A paste sheet, then the review screen for the change set (ADR-0002
   D3), then Apply. A "Copy instructions for ChatGPT" action that copies the rules constant. Revert to
   an earlier revision through the same review. Next Workout's empty state (S2) gets the action that
   opens the paste sheet. *Amended 2026-11-16, from the review of #3:* S2 shipped the empty state

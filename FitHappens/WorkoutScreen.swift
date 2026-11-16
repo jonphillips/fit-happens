@@ -6,29 +6,44 @@ struct WorkoutScreen: View {
 
   var body: some View {
     NavigationStack {
-      Group {
-        if let overview = model.overview {
-          workout(overview)
-        } else {
-          ContentUnavailableView(
-            "No program yet",
-            systemImage: "dumbbell",
-            description: Text("Import a workout program to get started.")
-          )
+      mainContent
+        .navigationTitle("Next Workout")
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button("Program", systemImage: "doc.text") { model.programButtonTapped() }
+          }
+          ToolbarItem(placement: .topBarTrailing) {
+            Button("History", systemImage: "clock") { model.historyButtonTapped() }
+          }
         }
-      }
-      .navigationTitle("Next Workout")
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Button("History", systemImage: "clock") { model.historyButtonTapped() }
+        .sheet(item: $model.destination) { destination in
+          presentedScreen(for: destination)
         }
+    }
+  }
+
+  @ViewBuilder
+  private var mainContent: some View {
+    if let overview = model.overview {
+      workout(overview)
+    } else {
+      VStack(spacing: 12) {
+        ContentUnavailableView(
+          "No program yet",
+          systemImage: "dumbbell",
+          description: Text("Import a workout program to get started.")
+        )
+        Button("Import Program", systemImage: "doc.text") { model.programButtonTapped() }
+          .buttonStyle(.borderedProminent)
       }
-      .sheet(item: $model.destination) { destination in
-        switch destination {
-        case .history:
-          HistoryScreen(model: model)
-        }
-      }
+    }
+  }
+
+  @ViewBuilder
+  private func presentedScreen(for destination: WorkoutScreenModel.Destination) -> some View {
+    switch destination {
+    case .history: HistoryScreen(model: model)
+    case .programImport: ProgramImportScreen()
     }
   }
 

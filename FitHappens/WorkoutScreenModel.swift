@@ -22,8 +22,14 @@ final class WorkoutScreenModel {
 
   enum Destination: Identifiable {
     case history
+    case programImport
 
-    var id: String { "history" }
+    var id: String {
+      switch self {
+      case .history: "history"
+      case .programImport: "programImport"
+      }
+    }
   }
 
   var currentProgram: CurrentProgram? {
@@ -77,6 +83,10 @@ final class WorkoutScreenModel {
 
   func historyButtonTapped() {
     destination = .history
+  }
+
+  func programButtonTapped() {
+    destination = .programImport
   }
 
   func changeDateButtonTapped(for completion: Completion) {
