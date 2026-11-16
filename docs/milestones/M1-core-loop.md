@@ -41,7 +41,9 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
   2026-11-16, from the review of #3.*
 - [ ] **S3 — Import and review.** A paste sheet, then the review screen for the change set (ADR-0002
   D3), then Apply. A "Copy instructions for ChatGPT" action that copies the rules constant. Revert to
-  an earlier revision through the same review.
+  an earlier revision through the same review. Next Workout's empty state (S2) gets the action that
+  opens the paste sheet. *Amended 2026-11-16, from the review of #3:* S2 shipped the empty state
+  without it, because import didn't exist yet.
 - [x] **S4 — History and corrections.** A short list of completions with undo for the latest and a
   date change for any (ADR-0003 D3). Reached from Next Workout, not a tab.
 
