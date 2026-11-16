@@ -33,7 +33,7 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
   write transaction. Rotation and
   completion as pure functions (ADR-0003 D2, D3). Fixture-driven tests, including a fixture converted
   from the real Markdown program.
-- [ ] **S2 — Next Workout.** The launch screen of PRODUCT.md § 1: next workout and last-done date,
+- [x] **S2 — Next Workout.** The launch screen of PRODUCT.md § 1: next workout and last-done date,
   ordered exercises with prescription text, steppers in each exercise's increment that write through
   (ADR-0003 D5), bodyweight rows without a weight, and **Complete Workout**. An empty state when
   there's no program yet, pointing at import. A weighted exercise with no increment steps by the 5 lb
@@ -42,7 +42,7 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
 - [ ] **S3 — Import and review.** A paste sheet, then the review screen for the change set (ADR-0002
   D3), then Apply. A "Copy instructions for ChatGPT" action that copies the rules constant. Revert to
   an earlier revision through the same review.
-- [ ] **S4 — History and corrections.** A short list of completions with undo for the latest and a
+- [x] **S4 — History and corrections.** A short list of completions with undo for the latest and a
   date change for any (ADR-0003 D3). Reached from Next Workout, not a tab.
 
 ## Dispatches

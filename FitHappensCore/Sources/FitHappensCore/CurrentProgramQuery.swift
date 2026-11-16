@@ -14,8 +14,18 @@ public enum CurrentProgramQuery {
   /// Reads active exercises separately from retired keys, preventing old retirements
   /// from reappearing in each proposal while retaining enough data to restore a key.
   public static func fetch(in database: Database) throws -> CurrentProgram {
-    let exerciseRows = try Exercise.all.fetchAll(database)
-    let exercisesByKey = canonicalRows(exerciseRows, key: \.key, id: \.id)
+    try make(
+      exerciseRows: Exercise.all.fetchAll(database),
+      workoutRows: Workout.all.fetchAll(database),
+      itemRows: WorkoutItem.all.fetchAll(database)
+    )
+  }
+
+  /// Projects persisted rows into one canonical current program without writing to the database.
+  public static func make(
+    exerciseRows: [Exercise], workoutRows: [Workout], itemRows: [WorkoutItem]
+  ) throws -> CurrentProgram {
+    let exercisesByKey = Dictionary(uniqueKeysWithValues: canonicalExerciseRows(exerciseRows).map { ($0.key, $0) })
     let exercises = exercisesByKey.values.sorted { $0.key < $1.key }
     for exercise in exercises where !exercise.isRetired && exercise.load == nil {
       throw CurrentProgramQueryError.invalidLoad(exercise.key)
@@ -27,13 +37,18 @@ public enum CurrentProgramQuery {
 
     let active = exercises.filter { !$0.isRetired }.map(currentExercise)
     let retired = exercises.filter(\.isRetired).map(currentExercise)
-    let workouts = try currentWorkouts(
-      workoutRows: Workout.all.fetchAll(database),
-      itemRows: WorkoutItem.all.fetchAll(database),
+    let workouts = currentWorkouts(
+      workoutRows: workoutRows,
+      itemRows: itemRows,
       exercisesByID: exercisesByID,
       exerciseIDByRowID: exerciseIDByRowID
     )
     return CurrentProgram(exercises: active, retiredExercises: retired, workouts: workouts)
+  }
+
+  /// The canonical row for each exercise key, used by projections that also need its stable ID.
+  public static func canonicalExerciseRows(_ rows: [Exercise]) -> [Exercise] {
+    canonicalRows(rows, key: \.key, id: \.id).values.sorted { $0.key < $1.key }
   }
 
   private static func currentWorkouts(
