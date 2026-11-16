@@ -19,6 +19,9 @@ packages:
   swift-dependencies:
     url: https://github.com/pointfreeco/swift-dependencies
     from: 1.0.0
+  swift-sharing:
+    url: https://github.com/pointfreeco/swift-sharing
+    from: 2.3.0
 targets:
   FitHappens:
     type: application
@@ -48,3 +51,5 @@ targets:
         product: FitHappensCore
       - package: swift-dependencies
         product: Dependencies
+      - package: swift-sharing
+        product: Sharing

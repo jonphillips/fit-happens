@@ -1,9 +1,52 @@
+import CustomDump
 @testable import FitHappensCore
 import Foundation
 import SQLiteData
 import Testing
 
 struct DatabaseTests {
+  @Test func completingWithHealthWorkoutIDStoresTheLinkedUUID() throws {
+    let database = try DatabaseQueue()
+    try FitHappensDatabaseMigrations.makeMigrator().migrate(database)
+    let exerciseID = UUID(uuidString: "00000000-0000-0000-0000-000000000101")!
+    let workoutID = UUID(uuidString: "00000000-0000-0000-0000-000000000102")!
+    let completionID = UUID(uuidString: "00000000-0000-0000-0000-000000000103")!
+    let healthWorkoutID = UUID(uuidString: "00000000-0000-0000-0000-000000000104")!
+    let exercise = Exercise(
+      id: exerciseID, key: "bench", name: "Bench", loadKind: .weight, currentLoadPounds: 135
+    )
+    let workout = Workout(id: workoutID, key: "A", position: 0)
+    _ = try database.write { connection in
+      try Exercise.insert { Exercise.Draft(exercise) }.execute(connection)
+      try Workout.insert { Workout.Draft(workout) }.execute(connection)
+      try WorkoutItem.insert {
+        WorkoutItem.Draft(WorkoutItem(
+          id: UUID(uuidString: "00000000-0000-0000-0000-000000000105")!,
+          workoutID: workoutID,
+          exerciseID: exerciseID,
+          position: 0,
+          prescription: "3 × 5"
+        ))
+      }.execute(connection)
+    }
+
+    _ = try database.write { connection in
+      try WorkoutHistoryOperations.complete(
+        workoutKey: "A",
+        at: Date(timeIntervalSince1970: 100),
+        completionID: completionID,
+        healthWorkoutID: healthWorkoutID,
+        makeID: { UUID(uuidString: "00000000-0000-0000-0000-000000000106")! },
+        in: connection
+      )
+    }
+    let storedID = try database.read { connection in
+      try Completion.all.fetchAll(connection).first { $0.id == completionID }?.healthWorkoutID
+    }
+
+    expectNoDifference(storedID, healthWorkoutID)
+  }
+
   @Test func firstMigrationCreatesTheCoreTables() throws {
     let database = try DatabaseQueue()
     try FitHappensDatabaseMigrations.makeMigrator().migrate(database)

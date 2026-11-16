@@ -10,6 +10,7 @@ let package = Package(
     .package(path: "../../jon-platform/packages/CloudSyncKit"),
     .package(path: "../../jon-platform/packages/LLMHandoffKit"),
     .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.3"),
   ],
   targets: [
     .target(
@@ -21,6 +22,13 @@ let package = Package(
         .product(name: "Dependencies", package: "swift-dependencies"),
       ]
     ),
-    .testTarget(name: "FitHappensCoreTests", dependencies: ["FitHappensCore"], resources: [.copy("Fixtures")]),
+    .testTarget(
+      name: "FitHappensCoreTests",
+      dependencies: [
+        "FitHappensCore",
+        .product(name: "CustomDump", package: "swift-custom-dump"),
+      ],
+      resources: [.copy("Fixtures")]
+    ),
   ]
 )

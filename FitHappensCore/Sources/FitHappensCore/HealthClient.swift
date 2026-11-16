@@ -73,9 +73,9 @@ public struct HealthClient: Sendable {
 }
 
 private enum HealthClientKey: DependencyKey {
-  static let liveValue = HealthClient.unimplemented
-  static let previewValue = HealthClient.preview
-  static let testValue = HealthClient.test
+  static var liveValue: HealthClient { .unimplemented }
+  static var previewValue: HealthClient { .preview }
+  static var testValue: HealthClient { .test }
 }
 
 public extension DependencyValues {

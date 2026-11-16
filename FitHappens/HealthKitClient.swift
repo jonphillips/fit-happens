@@ -29,6 +29,9 @@ private actor HealthStore {
   }
 
   func strengthWorkouts(start: Date, end: Date) async throws -> [HealthWorkout] {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      return []
+    }
     let workouts = try await queryWorkouts(start: start, end: end)
     return workouts
       .filter {
@@ -39,6 +42,9 @@ private actor HealthStore {
   }
 
   func walkingWorkouts(start: Date, end: Date) async throws -> [HealthWalkingWorkout] {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      return []
+    }
     let distance = HKQuantityType(.distanceWalkingRunning)
     return try await queryWorkouts(start: start, end: end)
       .filter { $0.workoutActivityType == .walking }
@@ -53,6 +59,9 @@ private actor HealthStore {
   }
 
   func latestBodyMass() async throws -> HealthBodyMass? {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      return nil
+    }
     let type = HKQuantityType(.bodyMass)
     let descriptor = HKSampleQueryDescriptor(
       predicates: [.quantitySample(type: type)],
