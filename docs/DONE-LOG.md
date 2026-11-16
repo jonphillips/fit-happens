@@ -7,4 +7,4 @@ History, newest first. The PR that completes a dispatch adds its entry naming it
 
 - **Result:** Added the iOS scaffold, synced schema, versioned program decoder and change set, atomic program reconciliation with revision history, deterministic duplicate convergence, and reusable CI caller.
 - **Verification:** scripts/check-drift.sh passed strict SwiftLint, 24 Core tests, package resolution, the iOS Simulator build, and strict handoff closeout.
-- **Owed:** M1 S0, M1 S1's device gate, in [device-passes.md](device-passes.md).
+- **Owed:** none. Second-device sync is checked in M1's done-when, once S3 can accept a program.

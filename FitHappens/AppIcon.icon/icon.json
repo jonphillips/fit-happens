@@ -1,0 +1,41 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "04_FH_and_45_lettering.svg",
+          "name" : "04_FH_and_45_lettering"
+        },
+        {
+          "image-name" : "03_front_plate_and_center_bore.svg",
+          "name" : "03_front_plate_and_center_bore"
+        },
+        {
+          "image-name" : "02_rear_plate.svg",
+          "name" : "02_rear_plate"
+        },
+        {
+          "image-name" : "01_background.svg",
+          "name" : "01_background"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
