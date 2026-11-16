@@ -32,6 +32,7 @@ targets:
           - iCloud.com.jonphillips.fithappens
         com.apple.developer.icloud-services:
           - CloudKit
+        com.apple.developer.healthkit: true
     info:
       path: FitHappens/Info.plist
       properties:
@@ -41,6 +42,7 @@ targets:
         CFBundleDisplayName: Fit Happens
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSHealthShareUsageDescription: Fit Happens reads your workouts, walking distance, and body weight to show recent activity and link Watch workouts to your program.
     dependencies:
       - package: FitHappensCore
         product: FitHappensCore
