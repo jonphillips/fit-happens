@@ -3,8 +3,8 @@
 *Status: **Designed** — 2026-11-16. Rules: jon-platform `AGENTS.md` and `docs/ios/`, and this repo's
 [decisions](../decisions/). Where this doc and those conflict, stop and flag it.*
 
-Summary: The app reads Apple Health and copies nothing from it. A strength workout from the Watch becomes the usual way to
-complete the next workout, and an Activity tab answers "what have I been doing physically lately?"
+Summary: The app reads Apple Health and copies nothing from it. A strength workout from the Watch
+becomes the usual way to complete the next workout, and an Activity tab answers "what have I been doing physically lately?"
 from Health and the app's own history. Health is read only; the body-mass write waits for the scale.
 
 ## The milestone in one sentence

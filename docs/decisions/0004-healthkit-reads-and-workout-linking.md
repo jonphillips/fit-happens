@@ -36,8 +36,8 @@ which reverses a non-goal and would be the biggest piece of the app. Jon chose l
 When the app comes forward and Health has a strength workout that ended in the last 12 hours,
 started after the latest completion, and isn't linked to one, the Next Workout screen offers:
 "48-minute strength workout at 7:10 — mark Workout A done?" Accepting completes with completed-at
-set to the workout's end and stores its UUID. Declining hides the offer for that workout. Completing by hand stays
-available and never requires Health.
+set to the workout's end and stores its UUID. Declining hides the offer for that workout. Completing
+by hand stays available and never requires Health.
 
 The Activity calendar counts a day as a strength day if it has a completion or any Health strength
 workout; a day is marked once, however many it has.
