@@ -172,15 +172,33 @@ struct ProgramLogicTests {
 
   @Test func rotationAdvancesFromLatestCompletionAndWraps() {
     let completions = [
-      CompletionSummary(workoutKey: "A", completedAt: Date(timeIntervalSince1970: 10)),
-      CompletionSummary(workoutKey: "B", completedAt: Date(timeIntervalSince1970: 20))
+      CompletionSummary(id: UUID(), workoutKey: "A", completedAt: Date(timeIntervalSince1970: 10)),
+      CompletionSummary(id: UUID(), workoutKey: "B", completedAt: Date(timeIntervalSince1970: 20))
     ]
-    #expect(WorkoutRotation.nextWorkoutKey(workoutKeys: ["A", "B"], completions: []) == "A")
-    #expect(WorkoutRotation.nextWorkoutKey(workoutKeys: ["A", "B"], completions: completions) == "A")
-    #expect(WorkoutRotation.nextWorkoutKey(workoutKeys: ["A", "B"], completions: [
-      CompletionSummary(workoutKey: "removed", completedAt: Date(timeIntervalSince1970: 30))
-    ]) == "A")
-    #expect(WorkoutRotation.nextWorkoutKey(workoutKeys: [], completions: []) == nil)
+    let latest = CompletionSummary.latest(in: completions)
+    #expect(WorkoutRotation.nextWorkoutKey(workoutKeys: ["A", "B"], latestCompletion: nil) == "A")
+    #expect(WorkoutRotation.nextWorkoutKey(workoutKeys: ["A", "B"], latestCompletion: latest) == "A")
+    #expect(WorkoutRotation.nextWorkoutKey(
+      workoutKeys: ["A", "B"],
+      latestCompletion: CompletionSummary(
+        id: UUID(), workoutKey: "removed", completedAt: Date(timeIntervalSince1970: 30)
+      )
+    ) == "A")
+    #expect(WorkoutRotation.nextWorkoutKey(workoutKeys: [], latestCompletion: nil) == nil)
+  }
+
+  @Test func latestCompletionUsesIDToBreakTimestampTies() {
+    let olderID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    let newerID = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
+    let completedAt = Date(timeIntervalSince1970: 10)
+    let tied = [
+      CompletionSummary(id: olderID, workoutKey: "A", completedAt: completedAt),
+      CompletionSummary(id: newerID, workoutKey: "B", completedAt: completedAt)
+    ]
+    #expect(CompletionSummary.latest(in: tied)?.workoutKey == "B")
+    #expect(WorkoutRotation.nextWorkoutKey(
+      workoutKeys: ["A", "B"], latestCompletion: CompletionSummary.latest(in: tied)
+    ) == "A")
   }
 
   @Test func completionSnapshotCopiesPrescribedValuesAndLoads() throws {

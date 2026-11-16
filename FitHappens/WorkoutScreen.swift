@@ -24,7 +24,10 @@ struct WorkoutScreen: View {
         }
       }
       .sheet(item: $model.destination) { destination in
-        WorkoutDestinationSheet(destination: destination, model: model)
+        switch destination {
+        case .history:
+          HistoryScreen(model: model)
+        }
       }
     }
   }
@@ -45,21 +48,6 @@ struct WorkoutScreen: View {
       }
 
       CompleteWorkoutRow(action: model.completeWorkoutButtonTapped)
-    }
-  }
-}
-
-private struct WorkoutDestinationSheet: View {
-  var destination: WorkoutScreenModel.Destination
-  var model: WorkoutScreenModel
-
-  @ViewBuilder
-  var body: some View {
-    switch destination {
-    case .history:
-      HistoryScreen(model: model)
-    case let .correctDate(id):
-      DateCorrectionScreen(model: model, completionID: id)
     }
   }
 }
@@ -138,10 +126,9 @@ private struct WeightControl: View {
         Spacer()
         Button("Decrease weight", systemImage: "minus.circle", action: decrement)
           .labelStyle(.iconOnly)
-          .disabled(exercise.increment == nil || load <= 0)
+          .disabled(load <= 0)
         Button("Increase weight", systemImage: "plus.circle", action: increment)
           .labelStyle(.iconOnly)
-          .disabled(exercise.increment == nil)
       }
       .accessibilityElement(children: .contain)
     } else {
@@ -153,37 +140,54 @@ private struct WeightControl: View {
 
 private struct HistoryScreen: View {
   var model: WorkoutScreenModel
+  @State private var path: [Completion.ID] = []
 
   var body: some View {
-    NavigationStack {
-      HistoryList(model: model)
-      .navigationTitle("History")
-      .toolbar {
-        ToolbarItem(placement: .confirmationAction) {
-          Button("Done") { model.destination = nil }
+    NavigationStack(path: $path) {
+      HistoryList(model: model, openDateCorrection: { path.append($0) })
+        .navigationTitle("History")
+        .navigationDestination(for: Completion.ID.self) { completionID in
+          DateCorrectionScreen(model: model, completionID: completionID)
         }
-      }
+        .toolbar {
+          ToolbarItem(placement: .confirmationAction) {
+            Button("Done") { model.destination = nil }
+          }
+        }
     }
   }
 }
 
 private struct HistoryList: View {
   var model: WorkoutScreenModel
+  @State private var completionToUndo: Completion? = nil
+  var openDateCorrection: (Completion.ID) -> Void = { _ in }
 
   var body: some View {
     List {
       if model.history.isEmpty {
         ContentUnavailableView("No workouts yet", systemImage: "clock")
       } else {
+        let latestCompletionID = model.latestCompletionID
         ForEach(model.history) { completion in
           HistoryRow(
             completion: completion,
-            isLatest: completion.id == model.latestCompletionID,
-            changeDate: { model.changeDateButtonTapped(for: completion) },
-            undo: model.undoLatestButtonTapped
+            isLatest: completion.id == latestCompletionID,
+            changeDate: {
+              model.changeDateButtonTapped(for: completion)
+              openDateCorrection(completion.id)
+            },
+            undo: { completionToUndo = completion }
           )
         }
       }
+    }
+    .confirmationDialog("Undo this workout?", item: $completionToUndo) { completion in
+      Button("Undo Workout \(completion.workoutKey)", role: .destructive) {
+        model.undoCompletionButtonTapped(completion.id)
+      }
+    } message: { _ in
+      Text("This removes the workout and its saved exercise snapshot.")
     }
   }
 }
@@ -217,19 +221,22 @@ private struct HistoryRow: View {
 private struct DateCorrectionScreen: View {
   @Bindable var model: WorkoutScreenModel
   var completionID: Completion.ID
+  @Environment(\.dismiss) private var dismiss
 
   var body: some View {
-    NavigationStack {
-      Form {
-        DatePicker("Completed", selection: $model.dateDraft, displayedComponents: .date)
+    Form {
+      DatePicker("Completed", selection: $model.dateDraft, in: ...model.now, displayedComponents: .date)
+    }
+    .navigationTitle("Change Date")
+    .toolbar {
+      ToolbarItem(placement: .cancellationAction) {
+        Button("Cancel") { dismiss() }
       }
-      .navigationTitle("Change Date")
-      .toolbar {
-        ToolbarItem(placement: .cancellationAction) {
-          Button("Cancel") { model.destination = .history }
-        }
-        ToolbarItem(placement: .confirmationAction) {
-          Button("Save") { model.saveCorrectedDateButtonTapped(for: completionID) }
+      ToolbarItem(placement: .confirmationAction) {
+        Button("Save") {
+          if model.saveCorrectedDateButtonTapped(for: completionID) {
+            dismiss()
+          }
         }
       }
     }

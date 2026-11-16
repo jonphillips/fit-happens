@@ -1,7 +1,7 @@
-# Next Up — M1 Dispatch 2: Next Workout and history/corrections
+# Next Up — M1 Dispatch 3: Program import and review
 
-**Slices:** M1 · S2, M1 · S4
-**Briefs:** docs/milestones/M1-core-loop.md §S2, §S4; docs/decisions/0001–0003
-**Done when:** the Next Workout screen shows the next workout and last-done date, ordered exercises and prescriptions, editable loads, and Complete Workout; completion advances rotation, history supports undo and date correction, and completion snapshots remain independent of the current program.
+**Slices:** M1 · S3
+**Briefs:** docs/milestones/M1-core-loop.md §S3; docs/decisions/0002
+**Done when:** paste a program contract, review its change set, and apply it; copy the program instructions for ChatGPT; reapply an earlier revision through the same review.
 **Owed:** see [device-passes.md](device-passes.md)
-**Notes:** The identifiers in §Identifiers are permanent; don't improvise them. Health remains out of scope for M1.
+**Notes:** Preserve the permanent identifiers in §Identifiers. Program revisions and completion snapshots remain independent.

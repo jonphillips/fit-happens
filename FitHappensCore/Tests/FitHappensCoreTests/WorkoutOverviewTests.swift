@@ -4,42 +4,47 @@ import SQLiteData
 import Testing
 
 struct WorkoutOverviewTests {
-  @Test func overviewOrdersExercisesAndAdvancesAfterCompletion() throws {
+  @Test func overviewUsesCanonicalProgramAndOmitsRetiredExercises() throws {
+    let chosenBenchID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    let duplicateBenchID = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
     let bench = Exercise(
-      id: UUID(), key: "bench", name: "Bench", loadKind: .weight,
-      currentLoadPounds: 135, increment: 5
+      id: chosenBenchID, key: "bench", name: "Bench", loadKind: .weight,
+      currentLoadPounds: 135, increment: nil
     )
-    let row = Exercise(id: UUID(), key: "row", name: "Row", loadKind: .weight, currentLoadPounds: 90)
-    let bodyweight = Exercise(id: UUID(), key: "plank", name: "Plank", loadKind: .bodyweight)
+    let duplicateBench = Exercise(
+      id: duplicateBenchID, key: "bench", name: "Duplicate bench", loadKind: .weight,
+      currentLoadPounds: 99, increment: 2.5
+    )
+    let retired = Exercise(
+      id: UUID(), key: "retired", name: "Retired lift", loadKind: .weight,
+      currentLoadPounds: 45, isRetired: true
+    )
     let workoutA = Workout(id: UUID(), key: "A", position: 0)
     let workoutB = Workout(id: UUID(), key: "B", position: 1)
-    let items = [
-      WorkoutItem(id: UUID(), workoutID: workoutA.id, exerciseID: bench.id, position: 1, prescription: "3 × 5"),
-      WorkoutItem(id: UUID(), workoutID: workoutA.id, exerciseID: bodyweight.id, position: 2, prescription: "3 × 30s"),
-      WorkoutItem(id: UUID(), workoutID: workoutA.id, exerciseID: row.id, position: 0, prescription: "3 × 8")
+    let rows = [
+      WorkoutItem(
+        id: uuid(40), workoutID: workoutA.id, exerciseID: duplicateBench.id, position: 0, prescription: "3 × 5"
+      ),
+      WorkoutItem(id: uuid(41), workoutID: workoutA.id, exerciseID: bench.id, position: 1, prescription: "4 × 5"),
+      WorkoutItem(id: UUID(), workoutID: workoutA.id, exerciseID: retired.id, position: 2, prescription: "2 × 10")
     ]
-    let first = WorkoutOverview.make(
-      workouts: [workoutA, workoutB], items: items, exercises: [bench, row, bodyweight], completions: []
+    let program = try CurrentProgramQuery.make(
+      exerciseRows: [duplicateBench, retired, bench], workoutRows: [workoutB, workoutA], itemRows: rows
     )
-    #expect(first?.workoutKey == "A")
-    #expect(first?.exercises.map(\.key) == ["row", "bench", "plank"])
-    #expect(first?.exercises[1].load == .weight(pounds: 135))
-    #expect(first?.exercises[2].loadKind == .bodyweight)
+    let overview = WorkoutOverview.make(program: program, latestCompletion: nil)
 
-    let completion = Completion(id: UUID(), workoutKey: "A", completedAt: Date(timeIntervalSince1970: 10))
-    let next = WorkoutOverview.make(
-      workouts: [workoutA, workoutB], items: items, exercises: [bench, row, bodyweight], completions: [completion]
-    )
-    #expect(next?.workoutKey == "B")
-    #expect(next?.lastCompletedAt == completion.completedAt)
+    #expect(overview?.workoutKey == "A")
+    #expect(overview?.exercises.map(\.key) == ["bench"])
+    #expect(overview?.exercises.first?.name == "Bench")
+    #expect(overview?.exercises.first?.prescription == "3 × 5")
+    #expect(overview?.exercises.first?.increment == nil)
   }
 
-  @Test func completionSnapshotIsIndependentAndCorrectionsUpdateHistory() throws {
+  @Test func defaultStepUpdatesStoredWeightAndCompletionReadsThatWeight() throws {
     let database = try DatabaseQueue()
     try FitHappensDatabaseMigrations.makeMigrator().migrate(database)
     let exercise = Exercise(
-      id: UUID(), key: "bench", name: "Bench", loadKind: .weight,
-      currentLoadPounds: 135, increment: 5
+      id: UUID(), key: "bench", name: "Bench", loadKind: .weight, currentLoadPounds: 0
     )
     let workout = Workout(id: UUID(), key: "A", position: 0)
     try database.write { connection in
@@ -51,37 +56,103 @@ struct WorkoutOverviewTests {
         ))
       }.execute(connection)
     }
-    let snapshot = try CompletionSnapshots.make(
-      workout: CurrentWorkout(key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": "3 × 5"]),
-      exercises: [CurrentExercise(
-        key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 135), increment: 5
-      )],
-      completedAt: Date(timeIntervalSince1970: 100), completionID: UUID(), makeID: UUID.init
-    )
-    try database.write { connection in
-      try WorkoutHistoryOperations.save(snapshot, exerciseIDsByKey: ["bench": exercise.id], in: connection)
-      try WorkoutHistoryOperations.setLoad(140, exerciseID: exercise.id, in: connection)
-      try WorkoutHistoryOperations.correctDate(
-        Date(timeIntervalSince1970: 50), completionID: snapshot.id, in: connection
+
+    let snapshot = try database.write { connection in
+      try WorkoutHistoryOperations.stepLoad(
+        exerciseID: exercise.id, direction: 1, configuredIncrement: nil, in: connection
+      )
+      try WorkoutHistoryOperations.stepLoad(
+        exerciseID: exercise.id, direction: 1, configuredIncrement: nil, in: connection
+      )
+      return try WorkoutHistoryOperations.complete(
+        workoutKey: "A", at: Date(timeIntervalSince1970: 100), completionID: UUID(), makeID: UUID.init,
+        in: connection
       )
     }
-    let saved = try database.read { connection in
-      (try Completion.find(snapshot.id).fetchOne(connection),
-       try CompletionItem.all.fetchAll(connection).first,
-       try Exercise.find(exercise.id).fetchOne(connection))
+
+    #expect(WorkoutLoad.defaultIncrementPounds == 5)
+    #expect(snapshot.items.first?.load == .weight(pounds: 10))
+    let storedItem = try database.read { connection in
+      try CompletionItem.all.fetchAll(connection).first
     }
-    #expect(saved.0?.completedAt == Date(timeIntervalSince1970: 50))
-    #expect(saved.1?.loadPounds == 135)
-    #expect(saved.1?.prescription == "3 × 5")
-    #expect(saved.2?.currentLoadPounds == 140)
+    #expect(storedItem?.loadPounds == 10)
+    #expect(storedItem?.prescription == "3 × 5")
+  }
+
+  @Test func undoLatestCompletionMovesRotationBack() throws {
+    let database = try databaseWithTwoWorkouts()
+    try database.write { connection in
+      try WorkoutHistoryOperations.complete(
+        workoutKey: "A", at: Date(timeIntervalSince1970: 100), completionID: uuid(1), makeID: { uuid(11) },
+        in: connection
+      )
+      try WorkoutHistoryOperations.complete(
+        workoutKey: "B", at: Date(timeIntervalSince1970: 200), completionID: uuid(2), makeID: { uuid(12) },
+        in: connection
+      )
+    }
+    #expect(try currentOverview(in: database)?.workoutKey == "A")
 
     try database.write { connection in
-      try WorkoutHistoryOperations.undo(snapshot.id, in: connection)
+      try WorkoutHistoryOperations.undo(uuid(2), in: connection)
     }
-    let counts = try database.read { connection in
-      (try Completion.all.fetchAll(connection).count, try CompletionItem.all.fetchAll(connection).count)
-    }
-    #expect(counts.0 == 0)
-    #expect(counts.1 == 0)
+    #expect(try currentOverview(in: database)?.workoutKey == "B")
   }
+
+  @Test func correctingLatestCompletionEarlierChangesRotation() throws {
+    let database = try databaseWithTwoWorkouts()
+    try database.write { connection in
+      try WorkoutHistoryOperations.complete(
+        workoutKey: "A", at: Date(timeIntervalSince1970: 100), completionID: uuid(1), makeID: { uuid(11) },
+        in: connection
+      )
+      try WorkoutHistoryOperations.complete(
+        workoutKey: "B", at: Date(timeIntervalSince1970: 200), completionID: uuid(2), makeID: { uuid(12) },
+        in: connection
+      )
+    }
+    #expect(try currentOverview(in: database)?.workoutKey == "A")
+
+    try database.write { connection in
+      try WorkoutHistoryOperations.correctDate(
+        Date(timeIntervalSince1970: 50), completionID: uuid(2), in: connection
+      )
+    }
+    #expect(try currentOverview(in: database)?.workoutKey == "B")
+  }
+}
+
+private func databaseWithTwoWorkouts() throws -> DatabaseQueue {
+  let database = try DatabaseQueue()
+  try FitHappensDatabaseMigrations.makeMigrator().migrate(database)
+  let exercise = Exercise(id: uuid(20), key: "lift", name: "Lift", loadKind: .weight, currentLoadPounds: 10)
+  let workoutA = Workout(id: uuid(21), key: "A", position: 0)
+  let workoutB = Workout(id: uuid(22), key: "B", position: 1)
+  try database.write { connection in
+    try Exercise.insert { Exercise.Draft(exercise) }.execute(connection)
+    try Workout.insert { [workoutA, workoutB].map(Workout.Draft.init) }.execute(connection)
+    try WorkoutItem.insert {
+      [workoutA, workoutB].enumerated().map { position, workout in
+        WorkoutItem.Draft(WorkoutItem(
+          id: uuid(30 + position), workoutID: workout.id, exerciseID: exercise.id,
+          position: 0, prescription: "3 × 5"
+        ))
+      }
+    }.execute(connection)
+  }
+  return database
+}
+
+private func currentOverview(in database: DatabaseQueue) throws -> WorkoutOverview? {
+  try database.read { connection in
+    let program = try CurrentProgramQuery.fetch(in: connection)
+    let latest = CompletionSummary.latest(in: try Completion.all.fetchAll(connection).map {
+      CompletionSummary(id: $0.id, workoutKey: $0.workoutKey, completedAt: $0.completedAt)
+    })
+    return WorkoutOverview.make(program: program, latestCompletion: latest)
+  }
+}
+
+private func uuid(_ value: Int) -> UUID {
+  UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", value))!
 }
