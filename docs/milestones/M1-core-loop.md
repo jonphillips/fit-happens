@@ -36,7 +36,9 @@ CloudKit container `iCloud.com.jonphillips.fithappens`, Core package `FitHappens
 - [ ] **S2 — Next Workout.** The launch screen of PRODUCT.md § 1: next workout and last-done date,
   ordered exercises with prescription text, steppers in each exercise's increment that write through
   (ADR-0003 D5), bodyweight rows without a weight, and **Complete Workout**. An empty state when
-  there's no program yet, pointing at import.
+  there's no program yet, pointing at import. A weighted exercise with no increment steps by the 5 lb
+  default (ADR-0002 D1); the rules constant tells ChatGPT to omit `increment` when it's 5 lb. *Amended
+  2026-11-16, from the review of #3.*
 - [ ] **S3 — Import and review.** A paste sheet, then the review screen for the change set (ADR-0002
   D3), then Apply. A "Copy instructions for ChatGPT" action that copies the rules constant. Revert to
   an earlier revision through the same review.
