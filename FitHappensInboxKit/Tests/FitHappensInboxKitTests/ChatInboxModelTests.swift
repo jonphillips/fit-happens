@@ -18,18 +18,8 @@ struct ChatInboxModelTests {
     var claims: [URL] = []
   }
 
-  @Test func applyClaimDiscardAndSwitchLifecycle() async {
-    let defaults = UserDefaults.standard
-    let oldEnabled = defaults.object(forKey: "fitHappensChatAccessEnabled")
-    defer {
-      if let oldEnabled {
-        defaults.set(oldEnabled, forKey: "fitHappensChatAccessEnabled")
-      } else {
-        defaults.removeObject(forKey: "fitHappensChatAccessEnabled")
-      }
-    }
-    defaults.set(false, forKey: "fitHappensChatAccessEnabled")
-
+  @Test(.timeLimit(.minutes(1)))
+  func applyClaimDiscardAndSwitchLifecycle() async {
     let rows = (0..<4).map { index in
       let time = String(format: "%06d", 120_000 + index)
       let url = URL(fileURLWithPath: "/inbox/20261119T\(time)Z-program.fhprogram")
