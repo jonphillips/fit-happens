@@ -50,14 +50,16 @@ final class ProgramImportModel {
   var review: ProgramReview?
   var errorMessage: String?
   var instructionsCopied = false
+  private var reviewingStoredRevision = false
 
   var acceptedRevisions: [ProgramRevision] { revisions }
-
   func reviewPastedProgram() {
+    reviewingStoredRevision = false
     makeReview(for: programText)
   }
 
   func reviewRevision(_ revision: ProgramRevision) {
+    reviewingStoredRevision = true
     programText = revision.contractText
     makeReview(for: revision.contractText)
   }
@@ -67,11 +69,14 @@ final class ProgramImportModel {
       return false
     }
     do {
-      _ = try ProgramApplication.apply(programText: review.contractText, to: database, acceptedAt: date.now)
+      _ = try ProgramApplication.apply(
+        programText: review.contractText, to: database, acceptedAt: date.now,
+        isStoredRevision: reviewingStoredRevision
+      )
       errorMessage = nil
       return true
     } catch {
-      errorMessage = Self.message(for: error)
+      errorMessage = ProgramErrorMessage.message(for: error)
       return false
     }
   }
@@ -88,7 +93,9 @@ final class ProgramImportModel {
       let current = try CurrentProgramQuery.make(
         exerciseRows: exercises, workoutRows: workouts, itemRows: workoutItems
       )
-      let changes = try ProgramChanges.make(current: current, proposal: decoded.contract)
+      let changes = try ProgramChanges.make(
+        current: current, proposal: decoded.contract, isStoredRevision: reviewingStoredRevision
+      )
       review = ProgramReview(
         contractText: text,
         changeSet: changes,
@@ -98,47 +105,8 @@ final class ProgramImportModel {
       path.append(.review)
     } catch {
       review = nil
-      errorMessage = Self.message(for: error)
+      errorMessage = ProgramErrorMessage.message(for: error)
     }
   }
 
-  private static func message(for error: Error) -> String {
-    switch error {
-    case let error as ProgramContractError:
-      switch error {
-      case let .unsupportedMarker(marker): "Unsupported program marker: \(marker)."
-      case let .malformedJSON(path, reason): "Program data at \(path): \(reason)"
-      case .emptyWorkouts: "Add at least one workout."
-      case let .emptyWorkout(key): "Workout \(key) has no exercises."
-      case .emptyWorkoutKey: "Every workout needs a key."
-      case .emptyExerciseKey: "Every exercise needs a key."
-      case let .emptyExerciseName(key): "Exercise \(key) needs a name."
-      case let .emptyPrescription(key): "Exercise \(key) needs a prescription."
-      case let .duplicateWorkoutKey(key): "Workout key \(key) appears more than once."
-      case let .duplicateExerciseKey(workout, exercise):
-        "Exercise key \(exercise) appears more than once in workout \(workout)."
-      case let .conflictingExerciseDefinition(key): "Exercise \(key) has conflicting definitions."
-      case let .missingStartingWeight(key): "New weighted exercise \(key) needs a startingWeight."
-      case let .bodyweightHasStartingWeight(key): "Bodyweight exercise \(key) must omit startingWeight."
-      case let .invalidWeight(key): "Exercise \(key) has an invalid weight."
-      case let .invalidIncrement(key): "Exercise \(key) must have a positive increment."
-      case let .loadKindChangedWithoutWeight(key):
-        "Exercise \(key) needs a startingWeight when changing to weight."
-      }
-    case let error as CurrentProgramQueryError:
-      switch error {
-      case let .invalidLoad(key): "Saved exercise \(key) has an invalid working weight."
-      }
-    case let error as ProgramApplicationError:
-      switch error {
-      case let .duplicateExerciseKey(key): "Saved exercise key \(key) appears more than once."
-      case let .duplicateWorkoutKey(key): "Saved workout key \(key) appears more than once."
-      case let .duplicateWorkoutItem(workout, exercise):
-        "Saved workout \(workout) has duplicate entries for \(exercise)."
-      case let .invalidWeight(key): "Saved exercise \(key) has an invalid working weight."
-      }
-    default:
-      "The program could not be reviewed. \(error.localizedDescription)"
-    }
-  }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct WorkoutScreen: View {
   @State private var model = WorkoutScreenModel()
+  @State private var chatAccessModel = ChatAccessExportModel()
   @Environment(\.scenePhase) private var scenePhase
 
   var body: some View {
@@ -25,6 +26,12 @@ struct WorkoutScreen: View {
             return
           }
           await model.screenAppeared()
+        }
+        .onChange(of: scenePhase) { _, phase in
+          guard phase == .background else {
+            return
+          }
+          Task { await chatAccessModel.appDidEnterBackground() }
         }
     }
   }
@@ -50,7 +57,7 @@ struct WorkoutScreen: View {
   private func presentedScreen(for destination: WorkoutScreenModel.Destination) -> some View {
     switch destination {
     case .history: HistoryScreen(model: model)
-    case .programImport: ProgramImportScreen()
+    case .programImport: ProgramImportScreen(exportModel: chatAccessModel)
     }
   }
 

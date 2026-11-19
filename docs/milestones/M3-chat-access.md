@@ -40,7 +40,7 @@ item extension `fhprogram`, export `FitHappensChatExport` v1 (ADR-0006).
 
 ## Slices
 
-- [ ] **S1 — Weight changes, and a review that shows everything Apply changes.** ADR-0002 D2 and D3,
+- [x] **S1 — Weight changes, and a review that shows everything Apply changes.** ADR-0002 D2 and D3,
   both amended.
   - **Weight changes:** `ProgramExercise` gains an optional `newWeight`. `ProgramChangeSet` gains
     weight changes (key, old → new pounds). Apply sets the working weight in the same transaction. A
@@ -60,7 +60,7 @@ item extension `fhprogram`, export `FitHappensChatExport` v1 (ADR-0006).
   - Tests: a weight change applied; an equal `newWeight` that isn't a change; each `newWeight` error; a
     revision re-apply that ignores its `newWeight` and leaves the weight alone; each detail change; a
     default-to-explicit 5 lb that isn't a change; no change when only a starting weight differs.
-- [ ] **S2 — Helper, export, and read tools.** ADR-0006 D1–D3 and D6.
+- [x] **S2 — Helper, export, and read tools.** ADR-0006 D1–D3 and D6.
   - **Core, test-first:** `FitHappensChatExport` v1 and a pure builder from rows (`CurrentProgramQuery`
     plus completions and their items): the program with working weights, retired exercises, the
     rotation (ADR-0003's derivation, not a copy of it), 365 days of completions, and the Health part:

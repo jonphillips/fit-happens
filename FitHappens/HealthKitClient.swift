@@ -8,7 +8,8 @@ enum HealthKitClient {
       requestReadAuthorization: { try await store.requestReadAuthorization() },
       strengthWorkouts: { start, end in try await store.strengthWorkouts(start: start, end: end) },
       walkingWorkouts: { start, end in try await store.walkingWorkouts(start: start, end: end) },
-      latestBodyMass: { try await store.latestBodyMass() }
+      latestBodyMass: { try await store.latestBodyMass() },
+      bodyMassSamples: { start, end in try await store.bodyMassSamples(start: start, end: end) }
     )
   }
 }
@@ -72,6 +73,21 @@ private actor HealthStore {
       return nil
     }
     return HealthBodyMass(pounds: sample.quantity.doubleValue(for: .pound()), date: sample.endDate)
+  }
+
+  func bodyMassSamples(start: Date, end: Date) async throws -> [HealthBodyMass] {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      return []
+    }
+    let type = HKQuantityType(.bodyMass)
+    let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [.strictEndDate])
+    let descriptor = HKSampleQueryDescriptor(
+      predicates: [.quantitySample(type: type, predicate: predicate)],
+      sortDescriptors: [SortDescriptor(\.endDate)], limit: nil
+    )
+    return try await descriptor.result(for: store).map {
+      HealthBodyMass(pounds: $0.quantity.doubleValue(for: .pound()), date: $0.endDate)
+    }
   }
 
   private func queryWorkouts(start: Date, end: Date) async throws -> [HKWorkout] {

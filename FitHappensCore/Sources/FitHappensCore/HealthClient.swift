@@ -42,17 +42,20 @@ public struct HealthClient: Sendable {
   public var strengthWorkouts: @Sendable (Date, Date) async throws -> [HealthWorkout]
   public var walkingWorkouts: @Sendable (Date, Date) async throws -> [HealthWalkingWorkout]
   public var latestBodyMass: @Sendable () async throws -> HealthBodyMass?
+  public var bodyMassSamples: @Sendable (Date, Date) async throws -> [HealthBodyMass]
 
   public init(
     requestReadAuthorization: @escaping @Sendable () async throws -> Void,
     strengthWorkouts: @escaping @Sendable (Date, Date) async throws -> [HealthWorkout],
     walkingWorkouts: @escaping @Sendable (Date, Date) async throws -> [HealthWalkingWorkout],
-    latestBodyMass: @escaping @Sendable () async throws -> HealthBodyMass?
+    latestBodyMass: @escaping @Sendable () async throws -> HealthBodyMass?,
+    bodyMassSamples: @escaping @Sendable (Date, Date) async throws -> [HealthBodyMass] = { _, _ in [] }
   ) {
     self.requestReadAuthorization = requestReadAuthorization
     self.strengthWorkouts = strengthWorkouts
     self.walkingWorkouts = walkingWorkouts
     self.latestBodyMass = latestBodyMass
+    self.bodyMassSamples = bodyMassSamples
   }
 
   public static let unimplemented = Self(

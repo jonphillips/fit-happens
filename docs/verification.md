@@ -11,9 +11,10 @@ Use `scripts/check-drift.sh` as the single local entry point. It runs, in order:
 1. `xcodegen generate --quiet`.
 2. Strict SwiftLint through `~/code/jon-platform/scripts/quiet-run`.
 3. The Core package tests through `quiet-run`.
-4. Xcode package resolution, then the pinned iOS Simulator build with macro validation skipped and
+4. The `FitHappensMCP` helper tests through `quiet-run`.
+5. Xcode package resolution, then the pinned iOS Simulator build with macro validation skipped and
    build caches under `.build/`.
-5. `~/code/jon-platform/scripts/check-handoff`.
+6. `~/code/jon-platform/scripts/check-handoff`.
 
 For a fast first pass, run a focused test before the full suite, for example:
 
@@ -25,6 +26,12 @@ The full package command is:
 
 ```sh
 ~/code/jon-platform/scripts/quiet-run swift test --package-path FitHappensCore
+```
+
+The helper's tests are:
+
+```sh
+~/code/jon-platform/scripts/quiet-run swift test --package-path FitHappensMCP
 ```
 
 Never paste a raw build log into a PR or chat. `quiet-run` retains it and reports the log path.

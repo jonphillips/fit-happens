@@ -4,6 +4,7 @@ import SwiftUI
 struct ProgramImportScreen: View {
   @Environment(\.dismiss) private var dismiss
   @State private var model = ProgramImportModel()
+  var exportModel: ChatAccessExportModel
 
   var body: some View {
     NavigationStack(path: $model.path) {
@@ -25,7 +26,34 @@ struct ProgramImportScreen: View {
     Form {
       pasteSection
       instructionsSection
+      chatAccessSection
       revisionsSection
+    }
+  }
+
+  private var chatAccessSection: some View {
+    Section {
+      Toggle("Chat Access", isOn: Binding(
+        get: { exportModel.isEnabled },
+        set: { exportModel.enabledChanged($0) }
+      ))
+      if exportModel.isEnabled {
+        Button("Refresh", systemImage: "arrow.clockwise") {
+          Task { await exportModel.refreshButtonTapped() }
+        }
+        if let lastExport = exportModel.lastExport {
+          LabeledContent(
+            "Last export",
+            value: "\(lastExport.date.formatted(date: .abbreviated, time: .shortened)) · "
+              + "\(lastExport.size.formatted()) bytes"
+          )
+        }
+        if let exportStatus = exportModel.exportStatus {
+          Text(exportStatus).font(.footnote).foregroundStyle(.secondary)
+        }
+      }
+    } footer: {
+      Text("Chat Access writes a read-only program, history, walks, and body-weight export to iCloud Drive.")
     }
   }
 
@@ -142,7 +170,9 @@ private struct ExerciseChangesSection: View {
     !changes.addedExercises.isEmpty || !changes.retiredExerciseKeys.isEmpty
       || !changes.restoredExerciseKeys.isEmpty || !changes.renames.isEmpty
       || !changes.loadKindChanges.isEmpty || !changes.carriedWeights.isEmpty
-      || !changes.ignoredStartingWeights.isEmpty
+      || !changes.ignoredStartingWeights.isEmpty || !changes.weightChanges.isEmpty
+      || !changes.ignoredNewWeights.isEmpty || !changes.incrementChanges.isEmpty
+      || !changes.loadLabelChanges.isEmpty || !changes.notesChanges.isEmpty
   }
 
   var body: some View {
@@ -150,33 +180,79 @@ private struct ExerciseChangesSection: View {
       if !hasChanges {
         Text("No exercise changes.").foregroundStyle(.secondary)
       }
-      ForEach(changes.addedExercises, id: \.key) { exercise in
+      ExerciseChangeRows(changes: changes)
+    }
+  }
+}
+
+private struct ExerciseChangeRows: View {
+  var changes: ProgramChangeSet
+
+  var body: some View {
+    rows
+  }
+
+  @ViewBuilder
+  private var rows: some View {
+    ForEach(changes.addedExercises, id: \.key) { exercise in
         LabeledContent("Added", value: "\(exercise.name) · \(exercise.key)")
         if exercise.loadKind == .weight, let pounds = exercise.startingWeight {
           LabeledContent("Starting weight", value: "\(pounds.formatted()) lb")
         }
-      }
-      ForEach(changes.retiredExerciseKeys, id: \.self) { key in
-        LabeledContent("Retired", value: key)
-      }
-      ForEach(changes.restoredExerciseKeys, id: \.self) { key in
-        LabeledContent("Restored", value: key)
-      }
-      ForEach(changes.renames, id: \.key) { rename in
-        LabeledContent("Renamed · \(rename.key)", value: "\(rename.oldName) → \(rename.newName)")
-      }
-      ForEach(changes.loadKindChanges, id: \.exerciseKey) { change in
-        LabeledContent("Load · \(change.exerciseKey)", value: "\(change.oldKind.rawValue) → \(change.newKind.rawValue)")
-      }
-      ForEach(changes.carriedWeights, id: \.exerciseKey) { carryover in
-        LabeledContent("Weight kept · \(carryover.exerciseKey)", value: carryover.load.reviewDescription)
-      }
-      ForEach(changes.ignoredStartingWeights, id: \.exerciseKey) { ignored in
-        LabeledContent(
-          "Starting weight ignored · \(ignored.exerciseKey)",
-          value: "\(ignored.proposedPounds.formatted()) lb proposed; \(ignored.keptLoad.reviewDescription) kept"
-        )
-      }
+    }
+    ForEach(changes.retiredExerciseKeys, id: \.self) { key in
+      LabeledContent("Retired", value: key)
+    }
+    ForEach(changes.restoredExerciseKeys, id: \.self) { key in
+      LabeledContent("Restored", value: key)
+    }
+    ForEach(changes.renames, id: \.key) { rename in
+      LabeledContent("Renamed · \(rename.key)", value: "\(rename.oldName) → \(rename.newName)")
+    }
+    ForEach(changes.loadKindChanges, id: \.exerciseKey) { change in
+      LabeledContent(
+        "Load · \(change.exerciseKey)", value: "\(change.oldKind.rawValue) → \(change.newKind.rawValue)"
+      )
+    }
+    ForEach(changes.weightChanges, id: \.exerciseKey) { change in
+      LabeledContent(
+        "Weight · \(change.exerciseKey)",
+        value: "\(change.oldPounds.formatted()) → \(change.newPounds.formatted()) lb"
+      )
+    }
+    ForEach(changes.ignoredNewWeights, id: \.exerciseKey) { ignored in
+      LabeledContent(
+        "New weight ignored · \(ignored.exerciseKey)",
+        value: "\(ignored.proposedPounds.formatted()) lb proposed; "
+          + "\(ignored.keptLoad.reviewDescription) kept"
+      )
+    }
+    ForEach(changes.carriedWeights, id: \.exerciseKey) { carryover in
+      LabeledContent("Weight kept · \(carryover.exerciseKey)", value: carryover.load.reviewDescription)
+    }
+    ForEach(changes.ignoredStartingWeights, id: \.exerciseKey) { ignored in
+      LabeledContent(
+        "Starting weight ignored · \(ignored.exerciseKey)",
+        value: "\(ignored.proposedPounds.formatted()) lb proposed; \(ignored.keptLoad.reviewDescription) kept"
+      )
+    }
+    ForEach(changes.incrementChanges, id: \.exerciseKey) { change in
+      LabeledContent(
+        "Increment · \(change.exerciseKey)",
+        value: "\(change.oldPounds.formatted()) → \(change.newPounds.formatted()) lb"
+      )
+    }
+    ForEach(changes.loadLabelChanges, id: \.exerciseKey) { change in
+      LabeledContent(
+        "Load label · \(change.exerciseKey)",
+        value: "\(change.oldValue ?? "none") → \(change.newValue ?? "none")"
+      )
+    }
+    ForEach(changes.notesChanges, id: \.exerciseKey) { change in
+      LabeledContent(
+        "Notes · \(change.exerciseKey)",
+        value: "\(change.oldValue ?? "none") → \(change.newValue ?? "none")"
+      )
     }
   }
 }

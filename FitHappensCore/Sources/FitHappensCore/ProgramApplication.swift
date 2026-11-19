@@ -48,12 +48,16 @@ public enum ProgramApplication {
   public static func apply(
     programText: String,
     to database: any DatabaseWriter,
-    acceptedAt: Date = .now
+    acceptedAt: Date = .now,
+    isStoredRevision: Bool = false
   ) throws -> ProgramChangeSet {
     let contract = try ProgramContractDecoder.decode(programText).contract
     return try database.write { database in
       try convergeDuplicateRows(in: database)
-      return try apply(contract: contract, programText: programText, acceptedAt: acceptedAt, in: database)
+      return try apply(
+        contract: contract, programText: programText, acceptedAt: acceptedAt,
+        isStoredRevision: isStoredRevision, in: database
+      )
     }
   }
 
@@ -112,12 +116,15 @@ public enum ProgramApplication {
   }
 
   private static func apply(
-    contract: ProgramContract, programText: String, acceptedAt: Date, in database: Database
+    contract: ProgramContract, programText: String, acceptedAt: Date,
+    isStoredRevision: Bool, in database: Database
   ) throws -> ProgramChangeSet {
     let current = try CurrentProgramQuery.fetch(in: database)
-    let changes = try ProgramChanges.make(current: current, proposal: contract)
+    let changes = try ProgramChanges.make(current: current, proposal: contract, isStoredRevision: isStoredRevision)
     let existing = try ExistingRows(in: database)
-    let exerciseIDs = try upsertExercises(contract, existing: existing, in: database)
+    let exerciseIDs = try upsertExercises(
+      contract, existing: existing, isStoredRevision: isStoredRevision, in: database
+    )
     let workoutIDs = try upsertWorkouts(contract, existing: existing.workoutsByKey, in: database)
     let desiredItems = desiredWorkoutItems(contract, exerciseIDs: exerciseIDs, workoutIDs: workoutIDs)
     try reconcileWorkoutItems(desiredItems, existing: existing, in: database)
@@ -127,7 +134,8 @@ public enum ProgramApplication {
   }
 
   private static func upsertExercises(
-    _ contract: ProgramContract, existing: ExistingRows, in database: Database
+    _ contract: ProgramContract, existing: ExistingRows,
+    isStoredRevision: Bool, in database: Database
   ) throws -> [String: Exercise.ID] {
     var definitions: [String: ProgramExercise] = [:]
     for item in contract.workouts.flatMap(\.items) where definitions[item.key] == nil {
@@ -136,7 +144,7 @@ public enum ProgramApplication {
     var ids: [String: Exercise.ID] = [:]
     for item in definitions.values {
       let old = existing.exercisesByKey[item.key]
-      let loadPounds = try loadPounds(for: item, previous: old)
+      let loadPounds = try loadPounds(for: item, previous: old, isStoredRevision: isStoredRevision)
       let exercise = Exercise(
         id: old?.id ?? UUID(), key: item.key, name: item.name, loadKind: item.loadKind,
         currentLoadPounds: loadPounds, increment: item.increment,
@@ -153,7 +161,9 @@ public enum ProgramApplication {
     return ids
   }
 
-  private static func loadPounds(for item: ProgramExercise, previous: Exercise?) throws -> Double? {
+  private static func loadPounds(
+    for item: ProgramExercise, previous: Exercise?, isStoredRevision: Bool
+  ) throws -> Double? {
     switch item.loadKind {
     case .bodyweight:
       return nil
@@ -162,7 +172,7 @@ public enum ProgramApplication {
         guard let currentLoad = previous.currentLoadPounds else {
           throw ProgramApplicationError.invalidWeight(item.key)
         }
-        return currentLoad
+        return isStoredRevision ? currentLoad : (item.newWeight ?? currentLoad)
       }
       guard let startingWeight = item.startingWeight else {
         throw ProgramApplicationError.invalidWeight(item.key)
