@@ -193,16 +193,20 @@ private struct WeightControl: View {
         Text("lb\(exercise.loadLabel.map { " \($0)" } ?? "")")
           .foregroundStyle(.secondary)
         Spacer()
-        Button("Decrease weight", systemImage: "minus.circle", action: decrement)
-          .labelStyle(.iconOnly)
-          .frame(minWidth: 44, minHeight: 44)
-          .contentShape(.rect)
+        Button(action: decrement) {
+          Label("Decrease weight", systemImage: "minus.circle")
+            .labelStyle(.iconOnly)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(.rect)
+        }
           .buttonStyle(.borderless)
           .disabled(load <= 0)
-        Button("Increase weight", systemImage: "plus.circle", action: increment)
-          .labelStyle(.iconOnly)
-          .frame(minWidth: 44, minHeight: 44)
-          .contentShape(.rect)
+        Button(action: increment) {
+          Label("Increase weight", systemImage: "plus.circle")
+            .labelStyle(.iconOnly)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(.rect)
+        }
           .buttonStyle(.borderless)
       }
       .accessibilityElement(children: .contain)

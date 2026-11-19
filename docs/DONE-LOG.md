@@ -5,8 +5,8 @@ History, newest first. The PR that completes a dispatch adds its entry naming it
 
 ## 2026-11-19 — List-row buttons (`effort/list-row-buttons`)
 
-- **Result:** Weight controls now have independent 44-point targets; History actions use borderless buttons.
-- **Verification:** SwiftLint, all 35 Core tests, and the app build passed via check-drift with a temporary local XcodeGen scheme; check-handoff passed.
+- **Result:** Weight controls now have independent 44-point targets; History actions use borderless buttons; `project.yml` declares the shared app scheme.
+- **Verification:** `scripts/check-drift.sh` passed unchanged, including SwiftLint, all 35 Core tests, the iOS app build, and `check-handoff --strict`.
 
 ## 2026-11-16 — Health access and Watch workout linking (`m2/s1-health-workout-linking`)
 

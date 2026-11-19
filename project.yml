@@ -26,6 +26,8 @@ targets:
   FitHappens:
     type: application
     platform: iOS
+    scheme:
+      testTargets: []
     sources:
       - path: FitHappens
     entitlements:
