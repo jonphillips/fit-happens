@@ -50,6 +50,15 @@ and notes. Rules:
 - **Starting weights only.** For a known key whose load kind is unchanged, active or restored, a
   starting weight is ignored and the working weight carries over; the review shows it as ignored.
   A load-kind change to `weight` requires a starting weight; a change to `bodyweight` has no weight.
+- *Amended 2026-11-19, Jon's call, with ADR-0006:* **a proposal may change a working weight.** An
+  item for a known key that's weighted before and after may carry `newWeight`. The review shows it as
+  old → new, and Apply sets it. A value equal to the current weight is no change. `newWeight` on a new
+  key, a bodyweight item, or a load-kind change is an error that points to `startingWeight`.
+  `startingWeight` keeps its meaning, so every stored contract still means what it meant, and
+  **re-applying a stored revision ignores its `newWeight`s** (shown as ignored), so going back to an
+  earlier program never rolls weights back. The marker stays `v1`: the field is additive, and the
+  only readers are this app and its helper, built from the same Core. The app still computes no
+  progression; a chat proposes and Jon approves.
 - **A key that disappears retires the exercise.** It stays in history and is never deleted.
 - Workouts and `workoutItems` are current-program rows. Apply deletes a workout or item that the
   accepted contract removes; completion snapshots and `programRevisions` remain independent.
@@ -66,6 +75,10 @@ It reconciles in one write transaction: upserts exercises and workouts by stable
 exercises, deletes removed current workouts/items, and stores the contract as a new
 `programRevisions` row. Completion snapshots do not reference current-program rows. Going back to an earlier program re-applies its stored contract through
 the same review.
+
+*Amended 2026-11-19, with ADR-0006:* the review also lists increment, load-label, and notes changes
+for known keys. Apply already overwrote them, so a review could say "No exercise changes" while a
+lift's step changed. That matters more once a chat stages proposals Jon didn't type.
 
 ### D4 — Two ways in, one decoder
 
