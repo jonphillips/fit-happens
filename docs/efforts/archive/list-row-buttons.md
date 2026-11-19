@@ -31,7 +31,7 @@ typed entry; those are product changes and need their own decision.
 - The two rows above carry the styles above, and no other row on the screen has two or more
   default-style buttons.
 - `scripts/check-drift.sh` passes. The fix can't be shown in a Core test or a simulator tap
-  ([verification.md](../verification.md)), so the PR says the taps are unverified on device.
+  ([verification.md](../../verification.md)), so the PR says the taps are unverified on device.
 - Closeout (ADR-0005 D16). The gate this effort owes is the M1 S2 and S4 line already in
-  [device-passes.md](../device-passes.md) (weight steps, undo confirmation, date correction), so
+  [device-passes.md](../../device-passes.md) (weight steps, undo confirmation, date correction), so
   add no new gate line.

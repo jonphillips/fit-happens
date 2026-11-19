@@ -3,6 +3,11 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-19 — List-row buttons (`effort/list-row-buttons`)
+
+- **Result:** Weight controls now have independent 44-point targets; History actions use borderless buttons.
+- **Verification:** SwiftLint, all 35 Core tests, and the app build passed via check-drift with a temporary local XcodeGen scheme; check-handoff passed.
+
 ## 2026-11-16 — Health access and Watch workout linking (`m2/s1-health-workout-linking`)
 
 - **Result:** Added HealthKit read access, an injectable HealthClient, recent Watch workout matching, and the offer to link an eligible workout to a completion.
