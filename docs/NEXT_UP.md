@@ -1,7 +1,7 @@
-# Next Up — M2 Dispatch 2: Activity
+# Next Up — Effort: List-row buttons
 
-**Slices:** M2 · S3
-**Briefs:** docs/milestones/M2-health.md §S3; docs/decisions/0004
-**Done when:** per the briefs. The Activity tab shows a four-week calendar of strength and walking workouts, daily walking distance, latest body weight, and one exercise’s progression line from completion snapshots; the exercise picker remembers its key and defaults to the first weighted exercise of the first workout; Health-backed empty states read “Nothing from Health yet.”
+**Slices:** effort `list-row-buttons`
+**Briefs:** docs/efforts/list-row-buttons.md
+**Done when:** per the brief. The weight − and + buttons each move the weight one step, and History's "Change date" no longer opens the undo confirmation.
 **Owed:** see [device-passes.md](device-passes.md)
-**Notes:** Read Health on demand without caching it. Walking days come only from `.walking` workouts; `.hiking` stays out.
+**Notes:** Branch `effort/list-row-buttons`. View-only change in `FitHappens/WorkoutScreen.swift`; leave the model and Core alone.
