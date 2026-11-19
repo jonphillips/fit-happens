@@ -3,6 +3,87 @@ import Foundation
 import Testing
 
 struct ProgramContractTests {
+  @Test func reportsWeightAndDetailChangesWithDefaultResolved() throws {
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(
+        key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 135),
+        increment: nil, loadLabel: "each", notes: "pause"
+      )],
+      workouts: [CurrentWorkout(key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": "3 × 5"])]
+    )
+    let proposal = ProgramContract(workouts: [ProgramWorkout(key: "A", items: [
+      ProgramExercise(
+        key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight,
+        newWeight: 145, increment: 2.5, loadLabel: nil, notes: "touch and go"
+      )
+    ])])
+    let changes = try ProgramChanges.make(current: current, proposal: proposal)
+    #expect(changes.weightChanges == [WeightChange(exerciseKey: "bench", oldPounds: 135, newPounds: 145)])
+    #expect(changes.incrementChanges == [IncrementChange(exerciseKey: "bench", oldPounds: 5, newPounds: 2.5)])
+    #expect(changes.loadLabelChanges == [OptionalTextChange(exerciseKey: "bench", oldValue: "each", newValue: nil)])
+    #expect(changes.notesChanges == [
+      OptionalTextChange(exerciseKey: "bench", oldValue: "pause", newValue: "touch and go")
+    ])
+  }
+
+  @Test func explicitDefaultIncrementAndEqualNewWeightAreNotChanges() throws {
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(
+        key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 135)
+      )],
+      workouts: [CurrentWorkout(key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": "3 × 5"])]
+    )
+    let proposal = ProgramContract(workouts: [ProgramWorkout(key: "A", items: [
+      ProgramExercise(
+        key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight,
+        newWeight: 135, increment: 5
+      )
+    ])])
+    let changes = try ProgramChanges.make(current: current, proposal: proposal)
+    #expect(changes.weightChanges.isEmpty)
+    #expect(changes.incrementChanges.isEmpty)
+  }
+
+  @Test func newWeightRequiresAnExistingWeightedKeyWithSameLoadKind() throws {
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(
+        key: "dip", name: "Dip", loadKind: .bodyweight, load: .bodyweight
+      )],
+      workouts: [CurrentWorkout(key: "A", exerciseKeys: ["dip"], prescriptions: ["dip": "3 × 5"])]
+    )
+    let newKey = ProgramContract(workouts: [ProgramWorkout(key: "A", items: [
+      ProgramExercise(
+        key: "new", name: "New", prescription: "3 × 5", loadKind: .weight,
+        startingWeight: 10, newWeight: 15
+      )
+    ])])
+    #expect(throws: ProgramContractError.newWeightOnNewExercise("new")) {
+      try ProgramChanges.make(current: current, proposal: newKey)
+    }
+    let bodyweight = ProgramContract(workouts: [ProgramWorkout(key: "A", items: [
+      ProgramExercise(
+        key: "dip", name: "Dip", prescription: "3 × 5", loadKind: .bodyweight,
+        newWeight: 15
+      )
+    ])])
+    #expect(throws: ProgramContractError.newWeightOnBodyweight("dip")) {
+      try ProgramChanges.make(current: current, proposal: bodyweight)
+    }
+  }
+
+  @Test func newWeightMustBePositive() throws {
+    let text = """
+    FH-PROGRAM: v1
+    {
+      "workouts": [{"key":"A","items":[{"key":"bench","name":"Bench",
+        "prescription":"3 × 5","loadKind":"weight","newWeight":0}]}]
+    }
+    """
+    #expect(throws: ProgramContractError.invalidWeight("bench")) {
+      try ProgramContractDecoder.decode(text)
+    }
+  }
+
   @Test func decodesTheREADMEProgramFixture() throws {
     let url = try #require(
       Bundle.module.url(forResource: "real-program", withExtension: "json", subdirectory: "Fixtures")

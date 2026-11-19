@@ -76,6 +76,40 @@ struct ProgramApplicationTests {
     #expect(after.revisions.count == before.revisionCount + 1)
     #expect(after.revisions.contains { $0.contractText == replacement })
   }
+
+  @Test func proposalChangesKnownWorkingWeight() throws {
+    let database = try makeDatabase()
+    let original = try programText([ProgramWorkout(key: "A", items: [
+      ProgramExercise(key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight, startingWeight: 135)
+    ])])
+    _ = try ProgramApplication.apply(programText: original, to: database)
+    let proposal = try programText([ProgramWorkout(key: "A", items: [
+      ProgramExercise(key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight, newWeight: 145)
+    ])])
+    let changes = try ProgramApplication.apply(programText: proposal, to: database)
+    let state = try storedState(database)
+    #expect(changes.weightChanges == [WeightChange(exerciseKey: "bench", oldPounds: 135, newPounds: 145)])
+    #expect(state.exercises.first?.currentLoadPounds == 145)
+  }
+
+  @Test func reapplyingStoredRevisionIgnoresNewWeight() throws {
+    let database = try makeDatabase()
+    let original = try programText([ProgramWorkout(key: "A", items: [
+      ProgramExercise(key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight, startingWeight: 135)
+    ])])
+    _ = try ProgramApplication.apply(programText: original, to: database)
+    let proposal = try programText([ProgramWorkout(key: "A", items: [
+      ProgramExercise(key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight, newWeight: 145)
+    ])])
+    _ = try ProgramApplication.apply(programText: proposal, to: database)
+    let changes = try ProgramApplication.apply(programText: proposal, to: database, isStoredRevision: true)
+    let row = try #require(try storedState(database).exercises.first)
+    #expect(row.currentLoadPounds == 145)
+    #expect(changes.weightChanges.isEmpty)
+    #expect(changes.ignoredNewWeights == [IgnoredWeight(
+      exerciseKey: "bench", proposedPounds: 145, keptLoad: .weight(pounds: 145)
+    )])
+  }
 }
 
 private struct StoredProgram {
