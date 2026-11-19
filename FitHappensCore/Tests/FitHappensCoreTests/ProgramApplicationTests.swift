@@ -106,7 +106,7 @@ struct ProgramApplicationTests {
     let row = try #require(try storedState(database).exercises.first)
     #expect(row.currentLoadPounds == 145)
     #expect(changes.weightChanges.isEmpty)
-    #expect(changes.ignoredNewWeights == [IgnoredStartingWeight(
+    #expect(changes.ignoredNewWeights == [IgnoredWeight(
       exerciseKey: "bench", proposedPounds: 145, keptLoad: .weight(pounds: 145)
     )])
   }

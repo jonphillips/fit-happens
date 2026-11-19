@@ -6,7 +6,7 @@ History, newest first. The PR that completes a dispatch adds its entry naming it
 ## 2026-11-19 — M3 Dispatch 1: Review fidelity and read tools (`m3/s1-review-fidelity-read-tools`)
 
 - **Result:** Added deliberate working-weight proposals, a complete exercise review, Core-owned contract errors, and the v1 iCloud export with three read tools.
-- **Verification:** Strict SwiftLint; 54 Core tests; 3 FitHappensMCP tests; pinned iOS Simulator build; strict handoff check.
+- **Verification:** Strict SwiftLint; 54 Core tests; 6 FitHappensMCP tests; pinned iOS Simulator build; strict handoff check.
 - **Owed:** M3 S1, M3 S2's device gate, in [device-passes.md](device-passes.md).
 
 ## 2026-11-19 — M1 · S2 + S4 and M2 · S1–S3 device passes

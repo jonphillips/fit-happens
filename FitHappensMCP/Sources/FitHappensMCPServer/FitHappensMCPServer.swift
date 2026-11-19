@@ -27,9 +27,16 @@ private actor ExportStore {
 
   func load() async throws -> ExportSnapshot {
     if reader == nil {
-      let folder = try ChatAccessHelperFolder.existing(
-        containerIdentifier: "iCloud.com.jonphillips.fithappens", isDevelopment: false, home: home
-      )
+      let folder: ChatAccessFolder
+      do {
+        folder = try ChatAccessHelperFolder.existing(
+          containerIdentifier: "iCloud.com.jonphillips.fithappens", isDevelopment: false, home: home
+        )
+      } catch {
+        throw ToolError(
+          "Fit Happens' iCloud Drive folder isn't on this Mac yet. Open Fit Happens, turn on Chat Access, and tap Refresh."
+        )
+      }
       reader = ChatAccessExportReader(folder: folder, materializationDeadline: deadline, materialize: materializer)
     }
     let file: ChatAccessExportFile
@@ -38,6 +45,8 @@ private actor ExportStore {
       throw ToolError("No export yet. Open Fit Happens and tap Refresh in Program → Chat Access.")
     } catch ChatAccessExportReaderError.materializationTimedOut {
       throw ToolError("The Fit Happens export is still downloading from iCloud. Try again in a minute.")
+    } catch {
+      throw ToolError("The Fit Happens export could not be read. Open the app and tap Refresh in Program → Chat Access.")
     }
     let value: FitHappensChatExport
     do { value = try FitHappensChatExport.decode(file.data) }

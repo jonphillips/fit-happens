@@ -26,6 +26,7 @@ struct ProgramReview: Equatable {
   var changeSet: ProgramChangeSet
   var proposedWorkouts: [ProgramWorkout]
   var warning: String?
+  var isStoredRevision: Bool
 }
 
 enum ProgramImportRoute: Hashable {
@@ -50,18 +51,15 @@ final class ProgramImportModel {
   var review: ProgramReview?
   var errorMessage: String?
   var instructionsCopied = false
-  private var reviewingStoredRevision = false
 
   var acceptedRevisions: [ProgramRevision] { revisions }
   func reviewPastedProgram() {
-    reviewingStoredRevision = false
-    makeReview(for: programText)
+    makeReview(for: programText, isStoredRevision: false)
   }
 
   func reviewRevision(_ revision: ProgramRevision) {
-    reviewingStoredRevision = true
     programText = revision.contractText
-    makeReview(for: revision.contractText)
+    makeReview(for: revision.contractText, isStoredRevision: true)
   }
 
   func applyReviewedProgram() -> Bool {
@@ -71,7 +69,7 @@ final class ProgramImportModel {
     do {
       _ = try ProgramApplication.apply(
         programText: review.contractText, to: database, acceptedAt: date.now,
-        isStoredRevision: reviewingStoredRevision
+        isStoredRevision: review.isStoredRevision
       )
       errorMessage = nil
       return true
@@ -86,7 +84,7 @@ final class ProgramImportModel {
     instructionsCopied = true
   }
 
-  private func makeReview(for text: String) {
+  private func makeReview(for text: String, isStoredRevision: Bool) {
     errorMessage = nil
     do {
       let decoded = try ProgramContractDecoder.decode(text)
@@ -94,13 +92,14 @@ final class ProgramImportModel {
         exerciseRows: exercises, workoutRows: workouts, itemRows: workoutItems
       )
       let changes = try ProgramChanges.make(
-        current: current, proposal: decoded.contract, isStoredRevision: reviewingStoredRevision
+        current: current, proposal: decoded.contract, isStoredRevision: isStoredRevision
       )
       review = ProgramReview(
         contractText: text,
         changeSet: changes,
         proposedWorkouts: decoded.contract.workouts,
-        warning: decoded.warning
+        warning: decoded.warning,
+        isStoredRevision: isStoredRevision
       )
       path.append(.review)
     } catch {

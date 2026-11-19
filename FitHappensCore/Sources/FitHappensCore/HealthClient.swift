@@ -49,7 +49,7 @@ public struct HealthClient: Sendable {
     strengthWorkouts: @escaping @Sendable (Date, Date) async throws -> [HealthWorkout],
     walkingWorkouts: @escaping @Sendable (Date, Date) async throws -> [HealthWalkingWorkout],
     latestBodyMass: @escaping @Sendable () async throws -> HealthBodyMass?,
-    bodyMassSamples: @escaping @Sendable (Date, Date) async throws -> [HealthBodyMass] = { _, _ in [] }
+    bodyMassSamples: @escaping @Sendable (Date, Date) async throws -> [HealthBodyMass]
   ) {
     self.requestReadAuthorization = requestReadAuthorization
     self.strengthWorkouts = strengthWorkouts
@@ -62,17 +62,25 @@ public struct HealthClient: Sendable {
     requestReadAuthorization: { fatalError("HealthClient is not configured") },
     strengthWorkouts: { _, _ in fatalError("HealthClient is not configured") },
     walkingWorkouts: { _, _ in fatalError("HealthClient is not configured") },
-    latestBodyMass: { fatalError("HealthClient is not configured") }
+    latestBodyMass: { fatalError("HealthClient is not configured") },
+    bodyMassSamples: { _, _ in fatalError("HealthClient is not configured") }
   )
 
   public static let preview = Self(
     requestReadAuthorization: {},
     strengthWorkouts: { _, _ in [] },
     walkingWorkouts: { _, _ in [] },
-    latestBodyMass: { nil }
+    latestBodyMass: { nil },
+    bodyMassSamples: { _, _ in [] }
   )
 
-  public static let test = preview
+  public static let test = Self(
+    requestReadAuthorization: {},
+    strengthWorkouts: { _, _ in [] },
+    walkingWorkouts: { _, _ in [] },
+    latestBodyMass: { nil },
+    bodyMassSamples: { _, _ in [] }
+  )
 }
 
 private enum HealthClientKey: DependencyKey {

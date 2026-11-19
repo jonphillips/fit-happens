@@ -24,6 +24,7 @@ let package = Package(
     .testTarget(name: "FitHappensMCPTests", dependencies: [
       "FitHappensMCPServer", .product(name: "ChatAccessKit", package: "ChatAccessKit"),
       .product(name: "MCPServerKit", package: "MCPServerKit"),
+      .product(name: "FitHappensCore", package: "FitHappensCore"),
     ]),
   ],
   swiftLanguageModes: [.v6]

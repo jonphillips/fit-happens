@@ -317,6 +317,12 @@ public struct IgnoredStartingWeight: Equatable, Sendable {
   public var keptLoad: Load
 }
 
+public struct IgnoredWeight: Equatable, Sendable {
+  public var exerciseKey: String
+  public var proposedPounds: Double
+  public var keptLoad: Load
+}
+
 public struct WeightChange: Equatable, Sendable {
   public var exerciseKey: String
   public var oldPounds: Double
@@ -368,7 +374,7 @@ public struct ProgramChangeSet: Equatable, Sendable {
   public var carriedWeights: [WeightCarryover]
   public var ignoredStartingWeights: [IgnoredStartingWeight]
   public var weightChanges: [WeightChange]
-  public var ignoredNewWeights: [IgnoredStartingWeight]
+  public var ignoredNewWeights: [IgnoredWeight]
   public var incrementChanges: [IncrementChange]
   public var loadLabelChanges: [OptionalTextChange]
   public var notesChanges: [OptionalTextChange]
@@ -391,7 +397,7 @@ public enum ProgramChanges {
     var carried: [WeightCarryover] = []
     var ignoredStartingWeights: [IgnoredStartingWeight] = []
     var weightChanges: [WeightChange] = []
-    var ignoredNewWeights: [IgnoredStartingWeight] = []
+    var ignoredNewWeights: [IgnoredWeight] = []
     var incrementChanges: [IncrementChange] = []
     var loadLabelChanges: [OptionalTextChange] = []
     var notesChanges: [OptionalTextChange] = []

@@ -39,7 +39,7 @@ struct ProgramImportScreen: View {
       ))
       if exportModel.isEnabled {
         Button("Refresh", systemImage: "arrow.clockwise") {
-          Task { await exportModel.refreshButtonTapped() }
+          exportModel.refreshButtonTapped()
         }
         if let lastExport = exportModel.lastExport {
           LabeledContent(

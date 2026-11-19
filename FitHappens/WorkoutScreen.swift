@@ -31,7 +31,7 @@ struct WorkoutScreen: View {
           guard phase == .background else {
             return
           }
-          Task { await chatAccessModel.appDidEnterBackground() }
+          chatAccessModel.appDidEnterBackground()
         }
     }
   }
