@@ -23,12 +23,12 @@ struct FitHappensApp: App {
   var body: some Scene {
     WindowGroup {
       TabView(selection: $selectedTab) {
-        WorkoutScreen()
-          .tabItem { Label("Next Workout", systemImage: "dumbbell.fill") }
-          .tag(AppTab.workout)
-        ActivityScreen(isActive: selectedTab == .activity)
-          .tabItem { Label("Activity", systemImage: "calendar") }
-          .tag(AppTab.activity)
+        Tab("Next Workout", systemImage: "dumbbell.fill", value: AppTab.workout) {
+          WorkoutScreen()
+        }
+        Tab("Activity", systemImage: "calendar", value: AppTab.activity) {
+          ActivityScreen(isActive: selectedTab == .activity)
+        }
       }
     }
   }

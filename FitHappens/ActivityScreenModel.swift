@@ -21,7 +21,6 @@ final class ActivityScreenModel {
   private(set) var walkingWorkouts: [HealthWalkingWorkout] = []
   private(set) var latestBodyMass: HealthBodyMass?
   private(set) var hasLoaded = false
-  var now: Date { date.now }
   var hasHealthActivity: Bool { !strengthWorkouts.isEmpty || !walkingWorkouts.isEmpty }
 
   var currentProgram: CurrentProgram? {
@@ -34,23 +33,14 @@ final class ActivityScreenModel {
     guard let currentProgram else {
       return []
     }
-    let canonicalExercises = CurrentProgramQuery.canonicalExerciseRows(exercises)
-    let exerciseRowsByKey = Dictionary(uniqueKeysWithValues: canonicalExercises.map { ($0.key, $0) })
-    let keys = currentProgram.workouts.flatMap(\.exerciseKeys)
-    var seen = Set<String>()
-    return keys.compactMap { key in
-      guard seen.insert(key).inserted, let exercise = exerciseRowsByKey[key],
-            !exercise.isRetired, exercise.loadKind == .weight, exercise.currentLoadPounds != nil
-      else {
-        return nil
-      }
-      return exercise
-    }
+    return ActivityProjection.orderedWeightedExercises(program: currentProgram, exercises: exercises)
   }
 
   var selectedExercise: Exercise? {
-    orderedWeightedExercises.first { $0.key == selectedExerciseKey }
-      ?? orderedWeightedExercises.first
+    guard let selectedExerciseKey else {
+      return nil
+    }
+    return orderedWeightedExercises.first { $0.key == selectedExerciseKey }
   }
 
   func calendarDays(calendar: Calendar) -> [ActivityDay] {
@@ -62,7 +52,7 @@ final class ActivityScreenModel {
 
   func progression(calendar: Calendar) -> ExerciseProgression? {
     ActivityProjection.progression(
-      exercise: selectedExercise, completions: completions, items: completionItems,
+      exercise: selectedExercise, exercises: exercises, completions: completions, items: completionItems,
       now: date.now, calendar: calendar
     )
   }

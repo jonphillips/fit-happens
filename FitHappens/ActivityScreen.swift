@@ -79,7 +79,6 @@ struct ActivityScreen: View {
 
   private var calendarGrid: some View {
     let days = model.calendarDays(calendar: calendar)
-    let now = model.now
     let symbols = calendar.veryShortStandaloneWeekdaySymbols
     let orderedSymbols = Array(symbols[(calendar.firstWeekday - 1)...]) + Array(symbols[..<(calendar.firstWeekday - 1)])
     let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
@@ -93,7 +92,7 @@ struct ActivityScreen: View {
           .accessibilityHidden(true)
       }
       ForEach(days) { day in
-        CalendarDayCell(day: day, isFuture: day.date > calendar.startOfDay(for: now))
+        CalendarDayCell(day: day)
       }
     }
     .padding(.vertical, 4)
@@ -136,15 +135,15 @@ struct ActivityScreen: View {
 
 private struct CalendarDayCell: View {
   var day: ActivityDay
-  var isFuture: Bool
+  @ScaledMetric(relativeTo: .caption2) private var markerSize = 8
 
   var body: some View {
     VStack(spacing: 2) {
       Text(day.date.formatted(.dateTime.day()))
         .font(.caption2)
-        .foregroundStyle(isFuture ? .tertiary : .primary)
-      if isFuture {
-        Color.clear.frame(height: 11)
+        .foregroundStyle(day.isFuture ? .tertiary : .primary)
+      if day.isFuture {
+        Color.clear.frame(height: markerSize)
       } else {
         HStack(spacing: 1) {
           if day.training == .strength || day.training == .both {
@@ -154,28 +153,29 @@ private struct CalendarDayCell: View {
             Image(systemName: "figure.walk")
           }
           if day.training == .neither {
-            Circle().fill(.quaternary).frame(width: 3, height: 3)
+            Circle().fill(.quaternary).frame(width: markerSize * 0.375, height: markerSize * 0.375)
           }
         }
-        .font(.system(size: 8, weight: .medium))
-        .frame(height: 11)
+        .font(.system(size: markerSize, weight: .medium))
         if let miles = day.walkingMiles {
           Text("\(miles.formatted(.number.precision(.fractionLength(1)))) mi")
-            .font(.system(size: 7, weight: .medium))
+            .font(.caption2.weight(.medium))
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
         } else {
-          Color.clear.frame(height: 9)
+          Color.clear.frame(height: markerSize)
         }
       }
     }
-    .frame(maxWidth: .infinity, minHeight: 34)
+    .frame(maxWidth: .infinity)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(accessibilityDescription)
   }
 
   private var accessibilityDescription: String {
     let date = day.date.formatted(date: .complete, time: .omitted)
+    if day.isFuture {
+      return "\(date), future date"
+    }
     let activity: String = switch day.training {
     case .neither: "No recorded activity"
     case .strength: "Strength workout"
