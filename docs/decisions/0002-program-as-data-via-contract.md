@@ -67,6 +67,10 @@ exercises, deletes removed current workouts/items, and stores the contract as a 
 `programRevisions` row. Completion snapshots do not reference current-program rows. Going back to an earlier program re-applies its stored contract through
 the same review.
 
+*Amended 2026-11-19, with ADR-0006:* the review also lists increment, load-label, and notes changes
+for known keys. Apply already overwrote them, so a review could say "No exercise changes" while a
+lift's step changed. That matters more once a chat stages proposals Jon didn't type.
+
 ### D4 — Two ways in, one decoder
 
 - **Paste** (M1): also how the first program arrives. ChatGPT converts the Markdown into the

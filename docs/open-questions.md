@@ -7,7 +7,11 @@ Seeded 2026-11-15.
 
 - **Contract sets starting weights only?** ADR-0002 D2 lets a proposal set weights only for new
   exercises, so the app owns weights and ChatGPT owns structure. The alternative is approving
-  "bench to 145" from a proposal, at the cost of more review surface.
+  "bench to 145" from a proposal, at the cost of more review surface. M3 makes this sharper: with
+  `get_history`, a chat can see a stalled lift and will want to propose a weight. M3 keeps the rule.
+- **Health in the chat export?** ADR-0006 D3 leaves body weight and walks out, because Health is read,
+  never mirrored (ADR-0004), and an export file is a copy. A chat deliberating over the program might
+  want the body-weight trend. Jon's call; adding it amends ADR-0006 D3.
 - **Does `.hiking` count as a walk?** (ADR-0004 D2.) M2 leaves it out until Jon says otherwise.
 - **Scale band widths.** A starting point of ±3 lb inner, ±8 lb outer (ADR-0005 D4).
 - **Which scale.** It has to meet ADR-0005 D1. Check range from where it'll sit to the mini.
@@ -19,10 +23,7 @@ Seeded 2026-11-15.
 
 ## Small follow-ups
 
-- **The program review doesn't show increment, label, or notes changes.** Apply overwrites all three
-  from the contract for a known key, but `ProgramChangeSet` doesn't report them, so a review can say
-  "No exercise changes" while a lift's step changes from 5 to 2.5. Found in the review of #6. Add them
-  to the change set and the review screen in a later dispatch (ADR-0002 D3's list grows by one line).
+None open. The review gap found in #6 is M3 S1.
 
 ## Candidates (not committed)
 
