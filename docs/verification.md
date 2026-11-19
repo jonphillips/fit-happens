@@ -12,9 +12,13 @@ Use `scripts/check-drift.sh` as the single local entry point. It runs, in order:
 2. Strict SwiftLint through `~/code/jon-platform/scripts/quiet-run`.
 3. The Core package tests through `quiet-run`.
 4. The `FitHappensMCP` helper tests through `quiet-run`.
-5. Xcode package resolution, then the pinned iOS Simulator build with macro validation skipped and
+5. The `FitHappensInboxKit` model tests through `quiet-run`.
+6. Xcode package resolution, then the pinned iOS Simulator build with macro validation skipped and
    build caches under `.build/`.
-6. `~/code/jon-platform/scripts/check-handoff`.
+7. `~/code/jon-platform/scripts/check-handoff`.
+
+`FitHappensInboxKit` owns the injectable inbox model so its apply/claim/discard behavior and watcher
+lifecycle tests run with SwiftPM on macOS, without booting a simulator.
 
 For a fast first pass, run a focused test before the full suite, for example:
 
@@ -32,6 +36,12 @@ The helper's tests are:
 
 ```sh
 ~/code/jon-platform/scripts/quiet-run swift test --package-path FitHappensMCP
+```
+
+The inbox model tests are:
+
+```sh
+~/code/jon-platform/scripts/quiet-run swift test --package-path FitHappensInboxKit
 ```
 
 Never paste a raw build log into a PR or chat. `quiet-run` retains it and reports the log path.

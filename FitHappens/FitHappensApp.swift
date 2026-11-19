@@ -1,5 +1,6 @@
 import Dependencies
 import FitHappensCore
+import FitHappensInboxKit
 import SwiftUI
 
 @main

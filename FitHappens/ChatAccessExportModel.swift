@@ -1,6 +1,7 @@
 import ChatAccessKit
 import Dependencies
 import FitHappensCore
+import FitHappensInboxKit
 import Foundation
 import Sharing
 import SQLiteData
@@ -213,20 +214,5 @@ final class ChatAccessExportModel {
     } catch {
       return ([], [])
     }
-  }
-}
-
-private enum ChatAccessContainerClientKey: DependencyKey {
-  static let liveValue = ChatAccessContainerClient.live(
-    containerIdentifier: "iCloud.com.jonphillips.fithappens",
-    isDevelopment: false,
-    appName: "Fit Happens"
-  )
-}
-
-extension DependencyValues {
-  var chatAccessContainer: ChatAccessContainerClient {
-    get { self[ChatAccessContainerClientKey.self] }
-    set { self[ChatAccessContainerClientKey.self] = newValue }
   }
 }

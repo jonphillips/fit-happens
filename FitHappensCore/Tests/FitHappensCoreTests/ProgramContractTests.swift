@@ -74,7 +74,7 @@ struct StagedProgramTests {
     )
     #expect(
       StagedProgram.check(text: rename, export: export)
-        == .valid(.init(changeSummary: "1 other changes"))
+        == .valid(.init(changeSummary: "1 other change"))
     )
   }
 

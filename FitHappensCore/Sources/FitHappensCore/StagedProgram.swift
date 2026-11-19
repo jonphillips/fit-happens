@@ -61,8 +61,12 @@ public enum StagedProgram {
     if !changes.addedExercises.isEmpty { parts.append("\(changes.addedExercises.count) added") }
     if !changes.retiredExerciseKeys.isEmpty { parts.append("\(changes.retiredExerciseKeys.count) retired") }
     if !changes.restoredExerciseKeys.isEmpty { parts.append("\(changes.restoredExerciseKeys.count) restored") }
-    if !changes.addedWorkouts.isEmpty { parts.append("\(changes.addedWorkouts.count) workouts added") }
-    if !changes.removedWorkoutKeys.isEmpty { parts.append("\(changes.removedWorkoutKeys.count) workouts removed") }
+    if !changes.addedWorkouts.isEmpty {
+      parts.append("\(countAndNoun(changes.addedWorkouts.count, singular: "workout")) added")
+    }
+    if !changes.removedWorkoutKeys.isEmpty {
+      parts.append("\(countAndNoun(changes.removedWorkoutKeys.count, singular: "workout")) removed")
+    }
     parts.append(contentsOf: changes.weightChanges.map {
       "\($0.exerciseKey) \($0.oldPounds.formatted()) → \($0.newPounds.formatted()) lb"
     })
@@ -70,8 +74,13 @@ public enum StagedProgram {
       "\($0.exerciseKey) increment \($0.oldPounds.formatted()) → \($0.newPounds.formatted()) lb"
     })
     let detailChanges = changes.renames.count + changes.loadKindChanges.count
-      + changes.workoutChanges.count + changes.loadLabelChanges.count + changes.notesChanges.count
-    if detailChanges > 0 { parts.append("\(detailChanges) other changes") }
+      + changes.workoutChanges.count + (changes.workoutOrderChanged ? 1 : 0)
+      + changes.loadLabelChanges.count + changes.notesChanges.count
+    if detailChanges > 0 { parts.append(countAndNoun(detailChanges, singular: "other change")) }
     return parts.isEmpty ? "No changes" : parts.joined(separator: ", ")
+  }
+
+  private static func countAndNoun(_ count: Int, singular: String) -> String {
+    "\(count) \(singular)\(count == 1 ? "" : "s")"
   }
 }

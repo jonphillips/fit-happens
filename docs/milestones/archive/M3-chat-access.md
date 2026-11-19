@@ -1,6 +1,6 @@
 # Milestone 3 — Chat access
 
-*Status: **Designed** — 2026-11-19. Rules: jon-platform `AGENTS.md` and `docs/ios/`, and this repo's
+*Status: **Done** — 2026-11-19. Rules: jon-platform `AGENTS.md` and `docs/ios/`, and this repo's
 [decisions](../../decisions/). Where this doc and those conflict, stop and flag it.*
 
 Summary: A chat can read the program, its history, and Jon's walks and body weight, and stage a new

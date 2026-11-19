@@ -1,4 +1,5 @@
 import FitHappensCore
+import FitHappensInboxKit
 import SwiftUI
 
 struct WorkoutScreen: View {

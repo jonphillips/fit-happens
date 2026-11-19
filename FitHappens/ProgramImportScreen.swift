@@ -1,4 +1,5 @@
 import FitHappensCore
+import FitHappensInboxKit
 import SwiftUI
 
 struct ProgramImportScreen: View {
@@ -39,7 +40,9 @@ struct ProgramImportScreen: View {
         Text(chatInbox.enabled ? "No staged proposals." : "Turn on Chat Access to receive proposals.")
           .foregroundStyle(.secondary)
       } else {
-        ForEach(chatInbox.rows) { stagedProgramRow($0) }
+        ForEach(chatInbox.rows) { row in
+          stagedProgramRow(row, isNewest: chatInbox.rows.first?.id == row.id)
+        }
       }
       if let message = chatInbox.message {
         Text(message).font(.caption).foregroundStyle(.secondary)
@@ -47,23 +50,26 @@ struct ProgramImportScreen: View {
     }
   }
 
-  private func stagedProgramRow(_ row: StagedProgramInboxRow) -> some View {
+  private func stagedProgramRow(_ row: StagedProgramInboxRow, isNewest: Bool) -> some View {
     VStack(alignment: .leading, spacing: 6) {
       Button {
         Task {
           guard let text = await chatInbox.read(row) else {
             return
           }
-          model.reviewStagedProgram(text, url: row.id)
+          if let error = model.reviewStagedProgram(text, url: row.id) {
+            chatInbox.setRowError(error, for: row.id)
+          }
         }
       } label: {
         HStack {
           VStack(alignment: .leading, spacing: 3) {
             Text(row.stagedAt?.formatted(date: .abbreviated, time: .shortened) ?? row.snapshot.name)
               .foregroundStyle(.primary)
-            Text(row.snapshot.isCurrent ? "Ready to review" : "Downloading…")
+            Text(row.snapshot.isCurrent ? "Ready to review" : row.snapshot.downloadError ?? "Downloading…")
               .font(.caption)
               .foregroundStyle(.secondary)
+            if isNewest { Text("Newest").font(.caption2).foregroundStyle(.tint) }
           }
           Spacer()
           Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
@@ -75,8 +81,9 @@ struct ProgramImportScreen: View {
       if let error = chatInbox.rowErrors[row.id] {
         Text(error).font(.caption).foregroundStyle(.red)
       }
+    }
+    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
       Button("Discard", role: .destructive) { Task { await chatInbox.discard(row) } }
-        .font(.caption)
     }
   }
 
@@ -173,8 +180,14 @@ struct ProgramImportScreen: View {
   private var reviewScreen: some View {
     if let review = model.review {
       ProgramReviewScreen(review: review, errorMessage: model.errorMessage) {
-        if model.applyReviewedProgram() {
-          if let url = model.stagedURL { Task { await chatInbox.claim(url) } }
+        if let url = model.stagedURL {
+          Task {
+            guard await chatInbox.applyStagedProgram(url, applying: { model.applyReviewedProgram() }) else {
+              return
+            }
+            dismiss()
+          }
+        } else if model.applyReviewedProgram() {
           dismiss()
         }
       }

@@ -27,12 +27,12 @@ packages:
     path: ../jon-platform/packages/ChatAccessKit
   LLMHandoffKit:
     path: ../jon-platform/packages/LLMHandoffKit
+  FitHappensInboxKit:
+    path: FitHappensInboxKit
 targets:
   FitHappens:
     type: application
     platform: iOS
-    scheme:
-      testTargets: []
     sources:
       - path: FitHappens
     entitlements:
@@ -67,3 +67,12 @@ targets:
         product: ChatAccessKit
       - package: LLMHandoffKit
         product: LLMHandoffKit
+      - package: FitHappensInboxKit
+        product: FitHappensInboxKit
+schemes:
+  FitHappens:
+    build:
+      targets:
+        FitHappens: all
+    run:
+      config: Debug

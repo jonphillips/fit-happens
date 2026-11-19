@@ -90,6 +90,7 @@ struct FitHappensMCPTests {
     let staged = try FileManager.default.contentsOfDirectory(at: inbox, includingPropertiesForKeys: nil)
       .filter { $0.pathExtension == "fhprogram" }
     #expect(staged.count == 1)
+    #expect(staged.first?.lastPathComponent.hasSuffix("-program.fhprogram") == true)
     #expect(try String(contentsOf: try #require(staged.first), encoding: .utf8) == valid)
 
     let invalid = try await call("propose_program", arguments: ["text": .string("FH-PROGRAM: v2\n{}")], on: server)
