@@ -193,11 +193,21 @@ private struct WeightControl: View {
         Text("lb\(exercise.loadLabel.map { " \($0)" } ?? "")")
           .foregroundStyle(.secondary)
         Spacer()
-        Button("Decrease weight", systemImage: "minus.circle", action: decrement)
-          .labelStyle(.iconOnly)
+        Button(action: decrement) {
+          Label("Decrease weight", systemImage: "minus.circle")
+            .labelStyle(.iconOnly)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(.rect)
+        }
+          .buttonStyle(.borderless)
           .disabled(load <= 0)
-        Button("Increase weight", systemImage: "plus.circle", action: increment)
-          .labelStyle(.iconOnly)
+        Button(action: increment) {
+          Label("Increase weight", systemImage: "plus.circle")
+            .labelStyle(.iconOnly)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(.rect)
+        }
+          .buttonStyle(.borderless)
       }
       .accessibilityElement(children: .contain)
     } else {
@@ -278,9 +288,11 @@ private struct HistoryRow: View {
       }
       Button("Change date", action: changeDate)
         .font(.subheadline)
+        .buttonStyle(.borderless)
       if isLatest {
         Button("Undo this completion", role: .destructive, action: undo)
           .font(.subheadline)
+          .buttonStyle(.borderless)
       }
     }
     .padding(.vertical, 4)
