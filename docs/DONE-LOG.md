@@ -3,10 +3,19 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-19 — M1 · S2 + S4 and M2 · S1–S3 device passes
+
+- **Result:** Passed on Jon's iPhone. **M2 S1 + S2:** Health read access granted; the app offered a
+  finished Watch strength workout and recorded it at the workout's end; a declined offer stayed hidden.
+  **M2 S3:** the Activity tab's calendar, walk distances, latest body weight, and progression line
+  matched Health. **M1 S2 + S4:** weight steps, completion and rotation, undo confirmation, and date
+  correction work, including the list-row buttons effort that folded into this gate. M2's done-when
+  is met. M1 S3 (program paste, revisions, and second-device sync) is still owed.
+
 ## 2026-11-19 — M2 Dispatch 2: Activity (`m2/s3-activity`)
 
 - **Result:** Added the Activity tab with a four-week strength and walking calendar, daily walk distances, latest body weight, and selectable progression from completion snapshots.
-- **Verification:** scripts/check-drift.sh passed: strict SwiftLint, all 37 Core tests, package resolution, iOS Simulator build, and strict handoff check.
+- **Verification:** scripts/check-drift.sh passed: strict SwiftLint, all 43 Core tests, package resolution, iOS Simulator build, and strict handoff check.
 - **Owed:** M2 S3's device gate, in [device-passes.md](device-passes.md).
 
 ## 2026-11-19 — List-row buttons (`effort/list-row-buttons`)
