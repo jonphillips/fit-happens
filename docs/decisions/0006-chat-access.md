@@ -1,7 +1,7 @@
 # ADR-0006 — Chat access: read the program, stage proposals into the review
 
 *Status: **proposed** — 2026-11-19, ratified by Jon merging the plan PR that adds it. Milestone:
-[M3](../milestones/M3-chat-access.md). Carries out [ADR-0002](0002-program-as-data-via-contract.md) D4
+[M3](../milestones/archive/M3-chat-access.md). Carries out [ADR-0002](0002-program-as-data-via-contract.md) D4
 on jon-platform ADR-0007 (with its Amendment 1) and ADR-0009 (`ChatAccessKit`). Fit Happens is the
 third app on the iCloud Drive transport, after Yes Chef and Galavant.*
 

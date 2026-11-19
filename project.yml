@@ -25,6 +25,8 @@ packages:
     from: 2.3.0
   ChatAccessKit:
     path: ../jon-platform/packages/ChatAccessKit
+  LLMHandoffKit:
+    path: ../jon-platform/packages/LLMHandoffKit
 targets:
   FitHappens:
     type: application
@@ -63,3 +65,5 @@ targets:
         product: Sharing
       - package: ChatAccessKit
         product: ChatAccessKit
+      - package: LLMHandoffKit
+        product: LLMHandoffKit

@@ -5,6 +5,8 @@ import SwiftUI
 @main
 struct FitHappensApp: App {
   @State private var selectedTab = AppTab.workout
+  @State private var chatInbox = ChatInboxModel()
+  @Environment(\.scenePhase) private var scenePhase
 
   init() {
     UserDefaults.standard.register(defaults: [FitHappensCloudSync.configuration.enabledDefaultsKey: true])
@@ -29,6 +31,14 @@ struct FitHappensApp: App {
         Tab("Activity", systemImage: "calendar", value: AppTab.activity) {
           ActivityScreen(isActive: selectedTab == .activity)
         }
+      }
+      .environment(chatInbox)
+      .task { await chatInbox.prepare() }
+      .onChange(of: scenePhase) { _, phase in
+        guard phase == .active else {
+          return
+        }
+        Task { await chatInbox.prepare() }
       }
     }
   }

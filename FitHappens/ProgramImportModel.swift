@@ -51,13 +51,22 @@ final class ProgramImportModel {
   var review: ProgramReview?
   var errorMessage: String?
   var instructionsCopied = false
+  var stagedURL: URL?
 
   var acceptedRevisions: [ProgramRevision] { revisions }
   func reviewPastedProgram() {
+    stagedURL = nil
     makeReview(for: programText, isStoredRevision: false)
   }
 
+  func reviewStagedProgram(_ text: String, url: URL) {
+    stagedURL = url
+    programText = text
+    makeReview(for: text, isStoredRevision: false)
+  }
+
   func reviewRevision(_ revision: ProgramRevision) {
+    stagedURL = nil
     programText = revision.contractText
     makeReview(for: revision.contractText, isStoredRevision: true)
   }

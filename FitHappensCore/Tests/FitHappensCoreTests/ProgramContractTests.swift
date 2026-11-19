@@ -2,7 +2,100 @@
 import Foundation
 import Testing
 
+struct StagedProgramTests {
+  @Test func stagedProgramChecksAgainstAnExportAndSummarizesChanges() throws {
+    let export = try FitHappensChatExport.decode(Data(Self.exportJSON.utf8))
+    let text = """
+    FH-PROGRAM: v1
+    {
+      "workouts": [{
+        "key": "A",
+        "items": [{"key": "bench", "name": "Bench", "prescription": "3 × 5",
+          "loadKind": "weight", "newWeight": 150}]
+      }]
+    }
+    """
+
+    #expect(
+      StagedProgram.check(text: text, export: export)
+        == .valid(.init(changeSummary: "bench 145 → 150 lb"))
+    )
+  }
+
+  @Test func stagedProgramWithoutExportChecksContractShapeOnly() {
+    let text = """
+    {
+      "workouts": [{
+        "key": "A",
+        "items": [{"key": "new", "name": "New", "prescription": "3 × 5",
+          "loadKind": "weight", "startingWeight": 10}]
+      }]
+    }
+    """
+    #expect(StagedProgram.check(text: text, export: nil) == .valid(.init(changeSummary: nil)))
+  }
+
+  @Test func stagedProgramReportsS1ValidationErrorsAndNewerMarkers() throws {
+    let export = try FitHappensChatExport.decode(Data(Self.emptyExportJSON.utf8))
+    let invalid = """
+    FH-PROGRAM: v1
+    {"workouts":[{"key":"A","items":[{"key":"new","name":"New","prescription":"3 × 5","loadKind":"weight"}]}]}
+    """
+    #expect(
+      StagedProgram.check(text: invalid, export: export)
+        == .invalid("New weighted exercise new needs a startingWeight.")
+    )
+    #expect(
+      StagedProgram.check(text: "FH-PROGRAM: v2\n{}", export: nil)
+        == .invalid("Unsupported program marker: FH-PROGRAM: v2.")
+    )
+  }
+
+  @Test func stagedProgramRejectsNewWeightOnANewKeyAndAllowsARename() throws {
+    let export = try FitHappensChatExport.decode(Data(Self.exportJSON.utf8))
+    let newKey = """
+    FH-PROGRAM: v1
+    {"workouts":[{"key":"A","items":[
+      {"key":"bench","name":"Bench","prescription":"3 × 5","loadKind":"weight"},
+      {"key":"new","name":"New","prescription":"3 × 5","loadKind":"weight",
+        "startingWeight":10,"newWeight":15}
+    ]}]}
+    """
+    let rename = """
+    FH-PROGRAM: v1
+    {"workouts":[{"key":"A","items":[
+      {"key":"bench","name":"Barbell Bench","prescription":"3 × 5","loadKind":"weight"}
+    ]}]}
+    """
+
+    #expect(
+      StagedProgram.check(text: newKey, export: export)
+        == .invalid("New exercise new must use startingWeight instead of newWeight.")
+    )
+    #expect(
+      StagedProgram.check(text: rename, export: export)
+        == .valid(.init(changeSummary: "1 other changes"))
+    )
+  }
+
+  private static let exportJSON = """
+  {"version":1,"generatedAt":"2026-11-19T12:00:00Z","device":"iPhone",
+   "program":{"workouts":[{"key":"A","items":[{"exerciseKey":"bench","prescription":"3 × 5",
+   "name":"Bench","loadKind":"weight","currentWeight":145,"increment":5,"loadLabel":null,"notes":null}]}],
+   "exercises":[{"key":"bench","name":"Bench","loadKind":"weight","currentWeight":145,
+   "increment":5,"loadLabel":null,"notes":null}],"retiredExercises":[],"nextWorkoutKey":"A","lastCompletion":null},
+   "completions":[],"walks":[],"bodyMass":[]}
+  """
+
+  private static let emptyExportJSON = """
+  {"version":1,"generatedAt":"2026-11-19T12:00:00Z","device":"iPhone",
+   "program":{"workouts":[],"exercises":[],"retiredExercises":[],"nextWorkoutKey":null,"lastCompletion":null},
+   "completions":[],"walks":[],"bodyMass":[]}
+  """
+}
+
 struct ProgramContractTests {
+
   @Test func reportsWeightAndDetailChangesWithDefaultResolved() throws {
     let current = CurrentProgram(
       exercises: [CurrentExercise(

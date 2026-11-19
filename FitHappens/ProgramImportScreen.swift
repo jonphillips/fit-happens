@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ProgramImportScreen: View {
   @Environment(\.dismiss) private var dismiss
+  @Environment(ChatInboxModel.self) private var chatInbox
   @State private var model = ProgramImportModel()
   var exportModel: ChatAccessExportModel
 
@@ -25,9 +26,57 @@ struct ProgramImportScreen: View {
   private var importForm: some View {
     Form {
       pasteSection
+      stagedProgramsSection
       instructionsSection
       chatAccessSection
       revisionsSection
+    }
+  }
+
+  private var stagedProgramsSection: some View {
+    Section("From Chat") {
+      if chatInbox.rows.isEmpty {
+        Text(chatInbox.enabled ? "No staged proposals." : "Turn on Chat Access to receive proposals.")
+          .foregroundStyle(.secondary)
+      } else {
+        ForEach(chatInbox.rows) { stagedProgramRow($0) }
+      }
+      if let message = chatInbox.message {
+        Text(message).font(.caption).foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  private func stagedProgramRow(_ row: StagedProgramInboxRow) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Button {
+        Task {
+          guard let text = await chatInbox.read(row) else {
+            return
+          }
+          model.reviewStagedProgram(text, url: row.id)
+        }
+      } label: {
+        HStack {
+          VStack(alignment: .leading, spacing: 3) {
+            Text(row.stagedAt?.formatted(date: .abbreviated, time: .shortened) ?? row.snapshot.name)
+              .foregroundStyle(.primary)
+            Text(row.snapshot.isCurrent ? "Ready to review" : "Downloading…")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+          Spacer()
+          Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+        }
+        .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .disabled(!row.snapshot.isCurrent)
+      if let error = chatInbox.rowErrors[row.id] {
+        Text(error).font(.caption).foregroundStyle(.red)
+      }
+      Button("Discard", role: .destructive) { Task { await chatInbox.discard(row) } }
+        .font(.caption)
     }
   }
 
@@ -35,7 +84,10 @@ struct ProgramImportScreen: View {
     Section {
       Toggle("Chat Access", isOn: Binding(
         get: { exportModel.isEnabled },
-        set: { exportModel.enabledChanged($0) }
+        set: {
+          exportModel.enabledChanged($0)
+          chatInbox.enabledChanged($0)
+        }
       ))
       if exportModel.isEnabled {
         Button("Refresh", systemImage: "arrow.clockwise") {
@@ -121,7 +173,10 @@ struct ProgramImportScreen: View {
   private var reviewScreen: some View {
     if let review = model.review {
       ProgramReviewScreen(review: review, errorMessage: model.errorMessage) {
-        if model.applyReviewedProgram() { dismiss() }
+        if model.applyReviewedProgram() {
+          if let url = model.stagedURL { Task { await chatInbox.claim(url) } }
+          dismiss()
+        }
       }
     } else {
       ContentUnavailableView("Review unavailable", systemImage: "exclamationmark.triangle")
