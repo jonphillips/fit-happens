@@ -48,7 +48,7 @@ Releases run `testflight` (jon-platform `docs/ios/testflight.md`) from clean `ma
 Internal testing only: Jon is the one tester. The app keeps its existing App ID
 `com.jonphillips.FitHappens`, because a new ID is a new app with an empty store. `testflight.conf`
 sets that ID, `CLOUDKIT_CONTAINER=iCloud.com.jonphillips.fithappens`, the house team ID, and the
-records files. `project.yml` gains `DEVELOPMENT_TEAM`, and `Info.plist` gains
+records files. `project.yml` already sets `DEVELOPMENT_TEAM`, and `Info.plist` gains
 `ITSAppUsesNonExemptEncryption = NO`, as Galavant's do.
 
 ### D2 — An in-app sync switch, and the push entitlement

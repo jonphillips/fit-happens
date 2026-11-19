@@ -29,7 +29,7 @@ first.
     and `ASC_VERSION` and `TEAM_ID` matching Galavant's file.
   - Add `cloudkit-expected-fields.txt`, listing every column of the six synced tables from the
     migration.
-  - In `project.yml`, add `DEVELOPMENT_TEAM` and set `CURRENT_PROJECT_VERSION` with Galavant's
+  - In `project.yml`, set `CURRENT_PROJECT_VERSION` with Galavant's
     floor-value comment.
   - In `Info.plist`, set `ITSAppUsesNonExemptEncryption` to `NO`.
 - **Push.** Add `aps-environment: development` to `project.yml`'s entitlements.
