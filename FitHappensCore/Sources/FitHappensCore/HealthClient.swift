@@ -37,6 +37,122 @@ public struct HealthBodyMass: Equatable, Sendable {
   }
 }
 
+public struct ActivityDay: Equatable, Identifiable, Sendable {
+  public enum Training: Equatable, Sendable {
+    case neither
+    case strength
+    case walking
+    case both
+  }
+
+  public var date: Date
+  public var training: Training
+  public var walkingMiles: Double?
+
+  public var id: Date { date }
+
+  public init(date: Date, training: Training, walkingMiles: Double?) {
+    self.date = date
+    self.training = training
+    self.walkingMiles = walkingMiles
+  }
+}
+
+public struct ExerciseProgression: Equatable, Sendable {
+  public var exerciseKey: String
+  public var exerciseName: String
+  public var currentPounds: Double
+  public var previousPounds: Double?
+  public var previousDate: Date?
+
+  public init(
+    exerciseKey: String, exerciseName: String, currentPounds: Double,
+    previousPounds: Double?, previousDate: Date?
+  ) {
+    self.exerciseKey = exerciseKey
+    self.exerciseName = exerciseName
+    self.currentPounds = currentPounds
+    self.previousPounds = previousPounds
+    self.previousDate = previousDate
+  }
+}
+
+public enum ActivityProjection {
+  // M2 S3 defines a four-week display; each calendar week has seven days.
+  private static let calendarDayCount = 4 * 7
+  // The international mile is exactly 1,609.344 meters.
+  private static let metersPerMile = 1_609.344
+  // M2 S3 compares against the most recent snapshot at least 90 days old.
+  private static let progressionLookbackDays = 90
+
+  public static func calendarDays(
+    now: Date, calendar: Calendar, completions: [Completion],
+    strengthWorkouts: [HealthWorkout], walkingWorkouts: [HealthWalkingWorkout]
+  ) -> [ActivityDay] {
+    guard let currentWeek = calendar.dateInterval(of: .weekOfYear, for: now),
+          let firstDay = calendar.date(byAdding: .weekOfYear, value: -3, to: currentWeek.start)
+    else {
+      return []
+    }
+
+    return (0..<calendarDayCount).compactMap { offset in
+      guard let day = calendar.date(byAdding: .day, value: offset, to: firstDay) else {
+        return nil
+      }
+      let dayInterval = calendar.dateInterval(of: .day, for: day)
+      let isFuture = day > calendar.startOfDay(for: now)
+      let strength = !isFuture && (
+        completions.contains { dayInterval?.contains($0.completedAt) == true }
+          || strengthWorkouts.contains { dayInterval?.contains($0.start) == true }
+      )
+      let walks = isFuture ? [] : walkingWorkouts.filter { dayInterval?.contains($0.start) == true }
+      let recordedDistances = walks.compactMap(\.distanceMeters)
+      let miles = recordedDistances.isEmpty ? nil : recordedDistances.reduce(0, +) / metersPerMile
+      let hasWalking = !walks.isEmpty
+      let training: ActivityDay.Training = switch (strength, hasWalking) {
+      case (false, false): .neither
+      case (true, false): .strength
+      case (false, true): .walking
+      case (true, true): .both
+      }
+      return ActivityDay(date: day, training: training, walkingMiles: miles)
+    }
+  }
+
+  public static func defaultExercise(program: CurrentProgram, exercises: [Exercise]) -> Exercise? {
+    let canonicalExercises = CurrentProgramQuery.canonicalExerciseRows(exercises)
+    let exercisesByKey = Dictionary(uniqueKeysWithValues: canonicalExercises.map { ($0.key, $0) })
+    guard let firstWorkout = program.workouts.first else {
+      return nil
+    }
+    return firstWorkout.exerciseKeys.compactMap { exercisesByKey[$0] }.first {
+      !$0.isRetired && $0.loadKind == .weight && $0.currentLoadPounds != nil
+    }
+  }
+
+  public static func progression(
+    exercise: Exercise?, completions: [Completion], items: [CompletionItem], now: Date,
+    calendar: Calendar
+  ) -> ExerciseProgression? {
+    guard let exercise, let currentPounds = exercise.currentLoadPounds else {
+      return nil
+    }
+    let itemByCompletion = Dictionary(grouping: items.filter { $0.exerciseID == exercise.id }, by: \.completionID)
+    let snapshots = completions.compactMap { completion -> (Date, Double)? in
+      guard let item = itemByCompletion[completion.id]?.first, let pounds = item.loadPounds else {
+        return nil
+      }
+      return (completion.completedAt, pounds)
+    }.sorted { $0.0 < $1.0 }
+    let threshold = calendar.date(byAdding: .day, value: -progressionLookbackDays, to: now) ?? .distantPast
+    let baseline = snapshots.last { $0.0 <= threshold } ?? snapshots.first
+    return ExerciseProgression(
+      exerciseKey: exercise.key, exerciseName: exercise.name, currentPounds: currentPounds,
+      previousPounds: baseline?.1, previousDate: baseline?.0
+    )
+  }
+}
+
 public struct HealthClient: Sendable {
   public var requestReadAuthorization: @Sendable () async throws -> Void
   public var strengthWorkouts: @Sendable (Date, Date) async throws -> [HealthWorkout]

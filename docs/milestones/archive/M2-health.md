@@ -1,7 +1,7 @@
 # Milestone 2 — Health
 
 *Status: **Designed** — 2026-11-16. Rules: jon-platform `AGENTS.md` and `docs/ios/`, and this repo's
-[decisions](../decisions/). Where this doc and those conflict, stop and flag it.*
+[decisions](../../decisions/). Where this doc and those conflict, stop and flag it.*
 
 Summary: The app reads Apple Health and copies nothing from it. A strength workout from the Watch
 becomes the usual way to complete the next workout, and an Activity tab answers "what have I been
@@ -39,7 +39,7 @@ ADR-0005) arrives with the scale, and asks then.
   (the column exists; no migration). **Not this one** hides the offer for that UUID, remembered on this
   device only (app storage, pruned of workouts that ended over 12 hours ago). Completing by hand
   is unchanged. No offer when there's no program or Health returns nothing.
-- [ ] **S3 — Activity.** The second tab (jon-platform `ui-and-platforms.md`: tabs on iPhone), per
+- [x] **S3 — Activity.** The second tab (jon-platform `ui-and-platforms.md`: tabs on iPhone), per
   PRODUCT.md § 2, read when the tab appears:
   - **Calendar:** four weeks ending with this one, weeks starting on the locale's first weekday,
     future days blank. Each day reads strength, walk, both, or neither. A strength day has a
