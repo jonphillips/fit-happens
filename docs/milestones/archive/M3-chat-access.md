@@ -1,7 +1,7 @@
 # Milestone 3 — Chat access
 
-*Status: **Designed** — 2026-11-19. Rules: jon-platform `AGENTS.md` and `docs/ios/`, and this repo's
-[decisions](../decisions/). Where this doc and those conflict, stop and flag it.*
+*Status: **Done** — 2026-11-19. Rules: jon-platform `AGENTS.md` and `docs/ios/`, and this repo's
+[decisions](../../decisions/). Where this doc and those conflict, stop and flag it.*
 
 Summary: A chat can read the program, its history, and Jon's walks and body weight, and stage a new
 program for review. A `fithappens-mcp` helper reads an export the iPhone writes to iCloud Drive, and
@@ -72,7 +72,7 @@ item extension `fhprogram`, export `FitHappensChatExport` v1 (ADR-0006).
     `main` that calls `ChatAccessHelperProcess.enableDatalessMaterialization()`, and a test target.
     Server name `fithappens`. Tools `get_program`, `get_history`, and `get_activity`, all read-only, reporting the
     export's age, size-capped, and reading through `ChatAccessExportReader`. No IDs or paths in
-    results. `scripts/check-drift.sh` runs the helper's tests, and [verification.md](../verification.md)
+    results. `scripts/check-drift.sh` runs the helper's tests, and [verification.md](../../verification.md)
     says so.
   - **The app:** `project.yml` adds `CloudDocuments` and
     `com.apple.developer.ubiquity-container-identifiers`, with no `NSUbiquitousContainers`. It declares
@@ -92,7 +92,7 @@ item extension `fhprogram`, export `FitHappensChatExport` v1 (ADR-0006).
     with no Health part), a newer export version, the 512-character opening, and the helper's tools
     through `MCPServerKit`'s in-memory harness against a temporary container (no export yet, a good
     export, a newer one).
-- [ ] **S3 — `propose_program` and From Chat.** ADR-0006 D4 and D5.
+- [x] **S3 — `propose_program` and From Chat.** ADR-0006 D4 and D5.
   - **Core:** one `StagedProgram.check(text, export:)` that the helper uses. It decodes, then runs
     `ProgramChanges.make` against the export's program when there is one, and returns the change set
     or the S1 error sentence. Add a one-line change summary from a `ProgramChangeSet`.

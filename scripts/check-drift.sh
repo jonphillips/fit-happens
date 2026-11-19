@@ -8,6 +8,7 @@ xcodegen generate --quiet
 "$quiet_run" swiftlint lint --strict --quiet
 "$quiet_run" swift test --package-path FitHappensCore
 "$quiet_run" swift test --package-path FitHappensMCP
+"$quiet_run" swift test --package-path FitHappensInboxKit
 "$quiet_run" xcodebuild -resolvePackageDependencies -project FitHappens.xcodeproj -scheme FitHappens
 "$quiet_run" xcodebuild \
   -project FitHappens.xcodeproj \

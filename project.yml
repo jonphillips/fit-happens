@@ -25,12 +25,12 @@ packages:
     from: 2.3.0
   ChatAccessKit:
     path: ../jon-platform/packages/ChatAccessKit
+  FitHappensInboxKit:
+    path: FitHappensInboxKit
 targets:
   FitHappens:
     type: application
     platform: iOS
-    scheme:
-      testTargets: []
     sources:
       - path: FitHappens
     entitlements:
@@ -63,3 +63,12 @@ targets:
         product: Sharing
       - package: ChatAccessKit
         product: ChatAccessKit
+      - package: FitHappensInboxKit
+        product: FitHappensInboxKit
+schemes:
+  FitHappens:
+    build:
+      targets:
+        FitHappens: all
+    run:
+      config: Debug

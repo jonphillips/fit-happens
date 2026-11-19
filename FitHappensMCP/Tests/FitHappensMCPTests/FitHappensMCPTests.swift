@@ -73,6 +73,55 @@ struct FitHappensMCPTests {
     #expect(!response.text.contains(home.path))
   }
 
+  @Test func stagesValidProposalAndRejectsInvalidProposalWithoutWriting() async throws {
+    let home = try makeHome(with: validExport())
+    defer { try? FileManager.default.removeItem(at: home) }
+    let server = FitHappensMCPServer.make(home: home)
+    let valid = """
+    FH-PROGRAM: v1
+    {"workouts":[{"key":"A","items":[{"key":"bench","name":"Bench","prescription":"3 × 5","loadKind":"weight","newWeight":150}]}]}
+    """
+    let response = try await call("propose_program", arguments: ["text": .string(valid)], on: server)
+    #expect(!response.isError)
+    #expect(response.text.contains("bench 145 → 150 lb"))
+    #expect(response.text.contains("Review it in Fit Happens → Program."))
+
+    let inbox = home.appending(path: "Library/Mobile Documents/iCloud~com~jonphillips~fithappens/MCP/Inbox")
+    let staged = try FileManager.default.contentsOfDirectory(at: inbox, includingPropertiesForKeys: nil)
+      .filter { $0.pathExtension == "fhprogram" }
+    #expect(staged.count == 1)
+    #expect(staged.first?.lastPathComponent.hasSuffix("-program.fhprogram") == true)
+    #expect(try String(contentsOf: try #require(staged.first), encoding: .utf8) == valid)
+
+    let invalid = try await call("propose_program", arguments: ["text": .string("FH-PROGRAM: v2\n{}")], on: server)
+    #expect(invalid.isError)
+    #expect(invalid.text.contains("Unsupported program marker"))
+    let afterInvalid = try FileManager.default.contentsOfDirectory(at: inbox, includingPropertiesForKeys: nil)
+      .filter { $0.pathExtension == "fhprogram" }
+    #expect(afterInvalid == staged)
+  }
+
+  @Test func stagesWithNoOrNewerExportUsingShapeValidationOnly() async throws {
+    let home = try makeContainer()
+    defer { try? FileManager.default.removeItem(at: home) }
+    let text = """
+    {"workouts":[{"key":"A","items":[{"key":"new","name":"New","prescription":"3 × 5","loadKind":"weight","startingWeight":10}]}]}
+    """
+    let response = try await call("propose_program", arguments: ["text": .string(text)], on: FitHappensMCPServer.make(home: home))
+    #expect(!response.isError)
+    #expect(response.text.contains("Review it in Fit Happens → Program."))
+    #expect(!response.text.contains("changeSummary"))
+
+    let newerHome = try makeHome(with: validExport(version: 2))
+    defer { try? FileManager.default.removeItem(at: newerHome) }
+    let newerResponse = try await call(
+      "propose_program", arguments: ["text": .string(text)],
+      on: FitHappensMCPServer.make(home: newerHome)
+    )
+    #expect(!newerResponse.isError)
+    #expect(newerResponse.text.contains("Review it in Fit Happens → Program."))
+  }
+
   @Test func serverInstructionsHaveAStandaloneOpeningAndAppendTheContractVerbatim() throws {
     let instructions = try #require(FitHappensMCPServer.make().instructions)
     let opening = String(instructions.prefix(512))

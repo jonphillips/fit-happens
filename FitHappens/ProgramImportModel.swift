@@ -51,15 +51,25 @@ final class ProgramImportModel {
   var review: ProgramReview?
   var errorMessage: String?
   var instructionsCopied = false
+  var stagedURL: URL?
 
   var acceptedRevisions: [ProgramRevision] { revisions }
   func reviewPastedProgram() {
-    makeReview(for: programText, isStoredRevision: false)
+    stagedURL = nil
+    _ = makeReview(for: programText, isStoredRevision: false)
+  }
+
+  func reviewStagedProgram(_ text: String, url: URL) -> String? {
+    stagedURL = url
+    let error = makeReview(for: text, isStoredRevision: false)
+    errorMessage = nil
+    return error
   }
 
   func reviewRevision(_ revision: ProgramRevision) {
+    stagedURL = nil
     programText = revision.contractText
-    makeReview(for: revision.contractText, isStoredRevision: true)
+    _ = makeReview(for: revision.contractText, isStoredRevision: true)
   }
 
   func applyReviewedProgram() -> Bool {
@@ -84,7 +94,7 @@ final class ProgramImportModel {
     instructionsCopied = true
   }
 
-  private func makeReview(for text: String, isStoredRevision: Bool) {
+  private func makeReview(for text: String, isStoredRevision: Bool) -> String? {
     errorMessage = nil
     do {
       let decoded = try ProgramContractDecoder.decode(text)
@@ -102,9 +112,11 @@ final class ProgramImportModel {
         isStoredRevision: isStoredRevision
       )
       path.append(.review)
+      return nil
     } catch {
       review = nil
       errorMessage = ProgramErrorMessage.message(for: error)
+      return errorMessage
     }
   }
 

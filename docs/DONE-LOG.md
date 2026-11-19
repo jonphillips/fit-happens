@@ -3,6 +3,12 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-19 — M3 Dispatch 2: Stage proposals in the review (`m3/s3-stage-proposals`)
+
+- **Result:** Added propose_program validation and staging, plus the app inbox review, apply and discard claim flows, watcher lifecycle, and ready-count badge.
+- **Verification:** scripts/check-drift.sh passed: strict SwiftLint, 58 Core tests, 8 FitHappensMCP tests, 1 FitHappensInboxKit test, pinned iOS Simulator build, and check-handoff --strict.
+- **Owed:** M3 S3's device gate, in [device-passes.md](device-passes.md).
+
 ## 2026-11-19 — M3 · S1 + S2 device pass (`records/m3-d1-device-pass`)
 
 - **Result:** Passed on Jon's iPhone. With Chat Access on and refreshed, the helper's `get_program`,

@@ -2,6 +2,7 @@ import ChatAccessKit
 import FitHappensCore
 import Foundation
 import MCPServerKit
+import LLMHandoffKit
 
 private struct ExportSnapshot: Sendable {
   var value: FitHappensChatExport
@@ -91,6 +92,12 @@ private struct ActivityResult: Encodable {
   var truncated: Bool
 }
 
+private struct ProposalResult: Encodable {
+  var staged: Bool
+  var changeSummary: String?
+  var message: String
+}
+
 public enum FitHappensMCPServer {
   public static func make(
     home: URL = FileManager.default.homeDirectoryForCurrentUser,
@@ -140,11 +147,45 @@ public enum FitHappensMCPServer {
           truncated: activity.walks.count > 120 || activity.bodyMass.count > 120
         ))
       },
+      tool("propose_program", "Stage a complete program for review in Fit Happens.", properties: [
+        "text": .object(["type": .string("string")]),
+      ], required: ["text"], readOnly: false) { input in
+        guard let text = input.objectValue?["text"]?.stringValue else {
+          return .error("Program text is required.")
+        }
+        let export = try? await store.load().value
+        switch StagedProgram.check(text: text, export: export) {
+        case let .invalid(message):
+          return .error(message)
+        case let .valid(check):
+          let folder: ChatAccessFolder
+          do {
+            folder = try ChatAccessHelperFolder.existing(
+              containerIdentifier: "iCloud.com.jonphillips.fithappens", isDevelopment: false, home: home
+            )
+          } catch {
+            throw ToolError("Fit Happens' iCloud Drive folder isn't on this Mac yet. Open Fit Happens and turn on Chat Access.")
+          }
+          do {
+            try HandoffInbox(root: folder.inboxURL, fileExtension: "fhprogram")
+              .stage(text, slug: "program", now: now())
+          } catch {
+            throw ToolError("The program could not be staged in Fit Happens: \(error.localizedDescription)")
+          }
+          return .json(ProposalResult(
+            staged: true,
+            changeSummary: check.changeSummary,
+            message: (check.changeSummary.map { "\($0). " } ?? "")
+              + "Review it in Fit Happens → Program."
+          ))
+        }
+      },
     ])
   }
 
   private static func tool(
     _ name: String, _ description: String, properties: [String: MCPValue], required: [String],
+    readOnly: Bool = true,
     handler: @escaping @Sendable (MCPValue) async throws -> MCPToolResult
   ) -> MCPTool {
     MCPTool(
@@ -152,7 +193,7 @@ public enum FitHappensMCPServer {
       inputSchema: .object([
         "type": .string("object"), "properties": .object(properties),
         "required": .array(required.map(MCPValue.string)), "additionalProperties": .bool(false),
-      ]), annotations: .init(readOnly: true, destructive: false, openWorld: false), handler: handler
+      ]), annotations: .init(readOnly: readOnly, destructive: false, openWorld: false), handler: handler
     )
   }
 }

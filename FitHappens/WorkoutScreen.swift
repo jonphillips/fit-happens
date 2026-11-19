@@ -1,10 +1,12 @@
 import FitHappensCore
+import FitHappensInboxKit
 import SwiftUI
 
 struct WorkoutScreen: View {
   @State private var model = WorkoutScreenModel()
   @State private var chatAccessModel = ChatAccessExportModel()
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(ChatInboxModel.self) private var chatInbox
 
   var body: some View {
     NavigationStack {
@@ -12,7 +14,7 @@ struct WorkoutScreen: View {
         .navigationTitle("Next Workout")
         .toolbar {
           ToolbarItem(placement: .topBarTrailing) {
-            Button("Program", systemImage: "doc.text") { model.programButtonTapped() }
+            programButton
           }
           ToolbarItem(placement: .topBarTrailing) {
             Button("History", systemImage: "clock") { model.historyButtonTapped() }
@@ -33,6 +35,23 @@ struct WorkoutScreen: View {
           }
           chatAccessModel.appDidEnterBackground()
         }
+    }
+  }
+
+  private var programButton: some View {
+    Button {
+      model.programButtonTapped()
+    } label: {
+      HStack(spacing: 6) {
+        Label("Program", systemImage: "doc.text")
+        if chatInbox.readyCount > 0 {
+          Text(chatInbox.readyCount.formatted())
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(.quaternary, in: Capsule())
+        }
+      }
     }
   }
 
