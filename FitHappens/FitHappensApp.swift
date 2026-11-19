@@ -4,6 +4,8 @@ import SwiftUI
 
 @main
 struct FitHappensApp: App {
+  @State private var selectedTab = AppTab.workout
+
   init() {
     UserDefaults.standard.register(defaults: [FitHappensCloudSync.configuration.enabledDefaultsKey: true])
     do {
@@ -20,7 +22,19 @@ struct FitHappensApp: App {
 
   var body: some Scene {
     WindowGroup {
-      WorkoutScreen()
+      TabView(selection: $selectedTab) {
+        Tab("Next Workout", systemImage: "dumbbell.fill", value: AppTab.workout) {
+          WorkoutScreen()
+        }
+        Tab("Activity", systemImage: "calendar", value: AppTab.activity) {
+          ActivityScreen(isActive: selectedTab == .activity)
+        }
+      }
     }
   }
+}
+
+private enum AppTab: Hashable {
+  case workout
+  case activity
 }

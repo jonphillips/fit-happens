@@ -3,6 +3,12 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-19 — M2 Dispatch 2: Activity (`m2/s3-activity`)
+
+- **Result:** Added the Activity tab with a four-week strength and walking calendar, daily walk distances, latest body weight, and selectable progression from completion snapshots.
+- **Verification:** scripts/check-drift.sh passed: strict SwiftLint, all 37 Core tests, package resolution, iOS Simulator build, and strict handoff check.
+- **Owed:** M2 S3's device gate, in [device-passes.md](device-passes.md).
+
 ## 2026-11-19 — List-row buttons (`effort/list-row-buttons`)
 
 - **Result:** Weight controls now have independent 44-point targets; History actions use borderless buttons; `project.yml` declares the shared app scheme.
