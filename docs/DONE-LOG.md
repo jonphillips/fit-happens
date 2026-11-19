@@ -3,6 +3,17 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-19 — M3 · S1 + S2 device pass (`records/m3-d1-device-pass`)
+
+- **Result:** Passed on Jon's iPhone. With Chat Access on and refreshed, the helper's `get_program`,
+  `get_history`, and `get_activity` matched Next Workout (next workout A, every working weight), History
+  (the last 90 days of completions), and Activity (the week's walks and the latest body weight) — called over
+  stdio on the Mac, since the `fithappens` tunnel isn't set up yet. Also adds `DEVELOPMENT_TEAM` to
+  `project.yml`: without it, every `xcodegen generate` dropped the signing team and device builds failed
+  to register the bundle ID.
+- **Verification:** Jon compared the three reads against the phone. After `xcodegen generate`, the project keeps
+  `DEVELOPMENT_TEAM`, and Jon's device build signed with it.
+
 ## 2026-11-19 — M3 Dispatch 1: Review fidelity and read tools (`m3/s1-review-fidelity-read-tools`)
 
 - **Result:** Added deliberate working-weight proposals, a complete exercise review, Core-owned contract errors, and the v1 iCloud export with three read tools.
