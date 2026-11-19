@@ -31,6 +31,11 @@ which reverses a non-goal and would be the biggest piece of the app. Jon chose l
 - **Body weight:** the latest body-mass sample, read when the screen appears. No cache.
 - All of it behind a `HealthClient` dependency with preview and test values.
 
+*Amended 2026-11-19, Jon's call, with ADR-0006 D3:* one copy is allowed. The chat export carries
+walks and body weight from the last 365 days, so a chat can weigh them. It's derived, overwritten on
+each write, read only by the chat helper, and never read back by the app, which still reads Health on
+demand.
+
 ### D3 — Linking the Watch workout
 
 When the app comes forward and Health has a strength workout that ended in the last 12 hours,

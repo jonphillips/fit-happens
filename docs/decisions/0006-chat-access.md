@@ -5,8 +5,9 @@
 on jon-platform ADR-0007 (with its Amendment 1) and ADR-0009 (`ChatAccessKit`). Fit Happens is the
 third app on the iCloud Drive transport, after Yes Chef and Galavant.*
 
-Summary: A local `fithappens-mcp` helper gives a ChatGPT or Claude chat two read tools and one write
-tool. `get_program` and `get_history` read an export the iPhone writes to iCloud Drive.
+Summary: A local `fithappens-mcp` helper gives a ChatGPT or Claude chat three read tools and one write
+tool. `get_program`, `get_history`, and `get_activity` read an export the iPhone writes to iCloud
+Drive, which includes walks and body weight from Health.
 `propose_program` checks a program contract with the app's own code and stages it into the inbox. The
 Program screen lists staged proposals, and tapping one opens the review that a paste opens. **Apply**
 is still the only write.
@@ -52,22 +53,31 @@ Settings screen, and the Program screen is where the program changes, so the swi
 Later, the scale's readings (ADR-0005 D3) share the container and the watcher as their own item kind.
 The switch gates only chat access, and M4 decides how readings are gated.
 
-### D3 — Two read tools, from a derived export
+### D3 — Three read tools, from a derived export
 
 - **`get_program`:** workouts in order. Each item gives the exercise key, name, prescription, load
-  kind, **working weight**, increment, load label, and notes. Retired exercises give key, name, and
+  kind, **current weight**, increment, load label, and notes. Retired exercises give key, name, and
   last working weight, so a chat can restore one by key. The rotation gives the next workout's key and
-  the last completion's date and key. The weight field is named `workingWeight`, not `startingWeight`,
-  so a chat that copies it back doesn't produce a contract field. The rules already say a starting
-  weight on a known key is ignored.
+  the last completion's date and key. The weight field is named `currentWeight`, which isn't a
+  contract field, so a chat that echoes the program back changes no weights. A change is a deliberate
+  `newWeight` (ADR-0002 D2, amended).
 - **`get_history(days, exercise?)`:** completions in the window (default 90 days, at most 365): the
   date, the workout key, and each item's key and snapshot load. With `exercise`, only that key. For
   each key, it also lists the dates its snapshot load changed. That's the progression a chat
   deliberates over, and it's what ADR-0003 snapshots record: prescribed, not performed.
+- **`get_activity(days)`:** walks in the window (date and miles, from `.walking` workouts as the
+  Activity tab counts them), body weight (date and pounds, the latest sample per day), and the latest
+  body weight. Default 90 days, at most 365.
 - **The export, version 1** (`FitHappensChatExport`, in Core): `generatedAt`, a device label, the
-  program as above, and completions from the last 365 days. It holds no row IDs (keys are enough), no
-  file paths, and **no Health data**. Health is read, never mirrored (ADR-0004), and an export file
-  in iCloud Drive would be a copy. A newer version is a typed error, as ADR-0007 D2 requires.
+  program as above, completions from the last 365 days, and walks and body weight from the last 365
+  days. It holds no row IDs (keys are enough) and no file paths. A newer version is a typed error, as
+  ADR-0007 D2 requires.
+- **Health in the export is Jon's call** (2026-11-19), and it amends ADR-0004: this file is the one
+  copy of Health data. It's derived, overwritten on each write, and read only by the helper. The app
+  never reads it back, so Health stays the source. Only walks and body weight cross. Strength workouts,
+  and anything ADR-0004 D1 doesn't already read, stay out. The Health part is read when the export is
+  written. A failed or empty read still writes the program part, and `get_activity` says "Nothing
+  from Health yet" (ADR-0004 D4).
 - **Written** on background and from a **Refresh** button beside the switch, through
   `ChatAccessExportWriter`, throttled to one per 15 minutes. Results report the export's age and are
   size-capped. "No export yet" tells Jon to open Fit Happens and tap Refresh.
@@ -80,7 +90,8 @@ The switch gates only chat access, and M4 decides how readings are gated.
 - **The checks are the review's, from the same Core code.** First the decoder: a newer marker is an
   error, and a missing or older one is silent at this door. When the export reads successfully, it
   then runs `ProgramChanges.make` against the export's program. That catches what only the current
-  program can show: a new weighted key without a starting weight, or a load-kind change without one.
+  program can show: a new weighted key without a starting weight, a load-kind change without one, or
+  a `newWeight` on a key that can't take it.
   A missing, unreadable, timed-out, or newer-format export never blocks staging, because the app runs
   the full review against the live database anyway.
 - **One error text.** A failed check returns `isError` with the same sentence the review shows. The
@@ -90,7 +101,7 @@ The switch gates only chat access, and M4 decides how readings are gated.
 - **Annotations:** not read-only, not destructive, so ChatGPT asks first. That's the second
   checkpoint (ADR-0007 D3).
 - **The result** says where it went. With the export, it's a one-line change summary ("2 added,
-  1 retired, 3 prescription changes"); without it, just that it was staged. Either way it ends with
+  1 retired, bench 145 → 150 lb"); without it, just that it was staged. Either way it ends with
   "Review it in Fit Happens → Program." The chat says that, not "saved" or "applied".
 
 ### D5 — Staged proposals open the existing review
@@ -150,5 +161,5 @@ No kit change is expected. If one turns out to be needed, it's shared code, so i
 | **Typed program fields in the tool schema** | Rejected: a second shape beside the contract. The text form has one decoder, and its errors go back to the chat. |
 | **Auto-apply staged proposals** | Rejected: ADR-0002 D3 and ADR-0007 D3. The tap in the app is the only write. |
 | **Keep only the newest proposal** | Rejected: D5. |
-| **Include body weight and walks in the export** | Out for now: ADR-0004 says Health isn't mirrored. Jon can add it on purpose ([open questions](../open-questions.md)). |
+| **Leave Health out of the export** | Rejected by Jon (2026-11-19): body weight and walks are part of what a chat should weigh. ADR-0004 is amended for this one copy. |
 | **A Settings screen for the switch** | Rejected: a fourth screen for one toggle. The Program screen already owns everything chat can change. |

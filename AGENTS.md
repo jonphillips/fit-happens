@@ -28,5 +28,6 @@ plans by merging plan PRs.
   paste or by the chat-access inbox, and a human tap applies it.
 - **History snapshots what was prescribed**, not what was performed (ADR-0003).
 - **Health is read, never mirrored.** The one write is body mass from the scale (ADR-0004, ADR-0005).
+  The one copy is the chat export's walks and body weight (ADR-0006 D3).
 - **No AI inside the app.** Deliberation about the program happens in ChatGPT; the app stays dumb.
 - Units are pounds, app-wide.
