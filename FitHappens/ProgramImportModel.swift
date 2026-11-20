@@ -97,6 +97,10 @@ final class ProgramImportModel {
         isStoredRevision: review.isStoredRevision
       )
       errorMessage = nil
+      path.removeAll()
+      programText = ""
+      self.review = nil
+      stagedURL = nil
       return true
     } catch {
       errorMessage = ProgramErrorMessage.message(for: error)

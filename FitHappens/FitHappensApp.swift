@@ -37,7 +37,7 @@ struct FitHappensApp: App {
         Tab("Program", systemImage: "doc.text", value: AppTab.program) {
           ProgramImportScreen(exportModel: chatAccessModel)
         }
-        .badge(chatInbox.readyCount > 0 ? Text(chatInbox.readyCount.formatted()) : nil)
+        .badge(chatInbox.readyCount)
       }
       .environment(chatInbox)
       .environment(correctionsModel)

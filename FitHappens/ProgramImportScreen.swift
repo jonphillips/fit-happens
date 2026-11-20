@@ -3,7 +3,6 @@ import FitHappensInboxKit
 import SwiftUI
 
 struct ProgramImportScreen: View {
-  @Environment(\.dismiss) private var dismiss
   @Environment(ChatInboxModel.self) private var chatInbox
   @State private var model = ProgramImportModel()
   var exportModel: ChatAccessExportModel
@@ -214,10 +213,9 @@ struct ProgramImportScreen: View {
             guard await chatInbox.applyStagedProgram(url, applying: { model.applyReviewedProgram() }) else {
               return
             }
-            dismiss()
           }
-        } else if model.applyReviewedProgram() {
-          dismiss()
+        } else {
+          _ = model.applyReviewedProgram()
         }
       }
     } else {

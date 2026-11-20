@@ -22,7 +22,7 @@ struct ActivityScreen: View {
       .navigationDestination(for: ActivityDestination.self) { destination in
         switch destination {
         case .history:
-          CompletionHistoryScreen(model: correctionsModel)
+          CompletionHistoryScreen(model: correctionsModel, path: $path)
         case let .correctDate(completionID):
           CompletionDateCorrectionDestination(model: correctionsModel, completionID: completionID)
         }
