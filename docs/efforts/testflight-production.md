@@ -68,6 +68,26 @@ first.
   restore of it on the same phone brings back the same program and history. The automatic backup
   appears, and the switch starts and stops sync.
 
+## Dispatch 2 — Build: `build.sh`'s fixture path
+
+**S1 — jon-platform `scripts/tests/build.sh`.** This is a jon-platform PR. The suite fails on
+`main`, and it showed up in the verification for jon-platform #155.
+- **The symptom.** `bash scripts/tests/build.sh` under Homebrew bash 5 exits 1 at
+  `[[ "$(cat "$STUB_ROOT/cwd")" == "$RESOLVED_REPO" ]]`. The `xcodebuild` stub records the logical
+  `$PWD` (`/var/folders/…`), but `RESOLVED_REPO` comes from `pwd -P` (`/private/var/folders/…`).
+  The suite passes when it runs directly through its `#!/bin/bash` shebang, and under `/bin/bash`.
+- **The fix.** In the stub, write `pwd -P > "$STUB_ROOT/cwd"` in place of
+  `printf '%s\n' "$PWD" > "$STUB_ROOT/cwd"`. Change nothing else. The architect tried this
+  against `main`, and the suite passed all three ways.
+- **Verification.** List all three runs: `scripts/tests/build.sh`, `/bin/bash scripts/tests/build.sh`,
+  and `bash scripts/tests/build.sh`. Each must print `build checks passed`.
+
+**S2 — The app's records.** The companion PR here has no code. It adds the `DONE-LOG.md` entry naming
+both branches and the jon-platform PR, and it advances `NEXT_UP.md`.
+
+**Done when:** S1's PR is merged with its three runs listed, and S2 is merged. There's no device
+gate.
+
 ## Then — Jon's cutover (ADR-0007 D5)
 
 This isn't a dispatch. Jon does it with the architect, after Dispatch 1's device gate passes. When a
