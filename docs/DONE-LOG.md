@@ -3,6 +3,24 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-20 — Device passes: M1 S3, M3 S3, Tabs and ramps, and the bundle ID (`plan/record-device-passes`)
+
+- **Result:** Jon passed these gates on device:
+  - **M1 S3:** the program and history sync between his iPad and iPhone.
+  - **M3 S3:** `propose_program` staged a proposal through the `fithappens` tunnel, and it was
+    reviewed and applied in the app. No JSON was copied.
+  - **Tabs and ramps Dispatch 1:** the three tabs and corrections.
+  - **Tabs and ramps Dispatch 2:** the ramp shows as `10 @ 155 · 8 @ 165 · 6 @ 175` on Next Workout
+    at 175 lb, on iPad and, after the new build, on iPhone. An earlier iPhone screenshot showed no
+    ramp because the phone was still on a pre-tabs build, which syncs the ramp item but can't show it.
+  - **Bundle ID and the review flash:** the iPhone runs the `com.jonphillips.fithappens` build with
+    the program and history synced. Jon had changed the ID by hand earlier, so the lowercase app was
+    likely already installed beside the old one. Apply no longer flashes "Review unavailable".
+
+  Also removes the "M3 S1, M3 S2" gate line. That gate passed on 2026-11-19 (#17), and a later merge
+  brought the line back.
+- **Verification:** Jon's device check, with screenshots from iPad and iPhone.
+
 ## 2026-11-20 — Bundle ID and the review flash (`effort/bundle-id-and-review-flash`)
 
 - **Result:** Pinned the app bundle ID to com.jonphillips.fithappens and kept the reviewed program visible while the review route pops.
