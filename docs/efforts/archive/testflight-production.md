@@ -7,7 +7,7 @@ Summary: Ship Fit Happens through TestFlight from the mini, so a merged dispatch
 
 Today a build reaches the phone only from Xcode, on a Mac at hand. With TestFlight, the always-on mini
 runs `testflight` after a merge, and Jon installs from the TestFlight app anywhere. Every device pass
-then runs on a TestFlight build. Decisions: [ADR-0007](../decisions/0007-testflight-and-production.md).
+then runs on a TestFlight build. Decisions: [ADR-0007](../../decisions/0007-testflight-and-production.md).
 
 ## Dispatch 1 — Build: `testflight` without an app group, then the app work
 
@@ -45,7 +45,7 @@ first.
   - Wire the kit's models as they are: Back Up Now through the share sheet; Restore… through the file
     importer, starting at `Documents/Backups/`; Undo Last Restore; the confirmed re-enable of sync;
     and the automatic backup on foreground.
-- **The Program screen** (the Program tab, after [tabs-and-ramps](archive/tabs-and-ramps.md)) gets one **iCloud** section below Chat Access (D4). It holds the switch and
+- **The Program screen** (the Program tab, after [tabs-and-ramps](tabs-and-ramps.md)) gets one **iCloud** section below Chat Access (D4). It holds the switch and
   its status line, Back Up Now, Restore…, Undo Last Restore (shown only when the kit has one), and the
   automatic backup's status.
 - **Tests (Core).**
@@ -98,7 +98,7 @@ Rollback, through step 8: reinstall a development build. Development and its dat
 
 ## Open for Jon
 
-- **When.** *Updated 2026-11-20:* queued after [Three tabs, and ramped sets](archive/tabs-and-ramps.md), whose ramp column should be in the Production schema. Originally queued after M3 Dispatch 2. If remote device passes matter sooner, this can go ahead of
+- **When.** *Updated 2026-11-20:* queued after [Three tabs, and ramped sets](tabs-and-ramps.md), whose ramp column should be in the Production schema. Originally queued after M3 Dispatch 2. If remote device passes matter sooner, this can go ahead of
   M3 Dispatch 2. Then PR #15's `NEXT_UP.md` advance would point here instead.
 - **The 90-day expiry.** A TestFlight build stops launching after 90 days. A finished app still needs
   a `testflight` run each quarter. It could be a scheduled task on the mini, or just a reminder.

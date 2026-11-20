@@ -26,6 +26,7 @@ let package = Package(
       name: "FitHappensCoreTests",
       dependencies: [
         "FitHappensCore",
+        .product(name: "CloudSyncKit", package: "CloudSyncKit"),
         .product(name: "CustomDump", package: "swift-custom-dump"),
       ],
       resources: [.copy("Fixtures")]

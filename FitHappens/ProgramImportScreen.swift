@@ -1,3 +1,4 @@
+import CloudSyncKit
 import FitHappensCore
 import FitHappensInboxKit
 import SwiftUI
@@ -6,6 +7,8 @@ struct ProgramImportScreen: View {
   @Environment(ChatInboxModel.self) private var chatInbox
   @State private var model = ProgramImportModel()
   var exportModel: ChatAccessExportModel
+  var iCloudSyncModel: ICloudSyncModel
+  var automaticBackupModel: AutomaticBackupModel
 
   var body: some View {
     NavigationStack(path: $model.path) {
@@ -24,6 +27,7 @@ struct ProgramImportScreen: View {
       pasteSection
       instructionsSection
       chatAccessSection
+      ICloudSection(syncModel: iCloudSyncModel, automaticBackupModel: automaticBackupModel)
       revisionsSection
     }
   }

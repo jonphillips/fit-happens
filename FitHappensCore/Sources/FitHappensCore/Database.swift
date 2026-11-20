@@ -1,5 +1,6 @@
 import CloudSyncKit
 import Dependencies
+import Foundation
 import SQLiteData
 
 public enum FitHappensCloudSync {
@@ -7,8 +8,43 @@ public enum FitHappensCloudSync {
     containerIdentifier: "iCloud.com.jonphillips.fithappens",
     enabledDefaultsKey: "FitHappensCloudKitSyncEnabled",
     enabledEnvironmentKey: "FIT_HAPPENS_CLOUDKIT_SYNC_ENABLED",
-    enabledLaunchArgument: "-FitHappensCloudKitSyncEnabled"
+    enabledLaunchArgument: "-FitHappensCloudKitSyncEnabled",
+    restoreRequiresManualEnablementDefaultsKey: "FitHappensCloudKitSyncRestoreRequiresManualEnablement"
   )
+
+  public static let databaseBackupConfiguration = DatabaseBackupConfiguration(
+    displayName: "Fit Happens",
+    backupFilenamePrefix: "FitHappens-Backup-",
+    preRestoreFilenamePrefix: "FitHappens-PreRestore-",
+    restoreStagingFilenamePrefix: "FitHappens-Restore-",
+    identifyingTableNames: [
+      "exercises", "workouts", "workoutItems", "programRevisions", "completions", "completionItems"
+    ],
+    declaredSchemaVersion: FitHappensDatabaseMigrations.schemaVersion,
+    lastPreRestoreDefaultsKey: "FitHappensDatabaseBackupLastPreRestorePath",
+    cloudSync: configuration,
+    liveStoreURL: { try FitHappensDatabaseStorage.liveDatabaseURL() },
+    migrate: { try FitHappensDatabaseMigrations.migrateRestoreCandidate(at: $0) }
+  )
+
+  public static let automaticBackupConfiguration = AutomaticBackupConfiguration(
+    filenamePrefix: "FitHappens-Auto-",
+    libraryCountTableName: "completions",
+    installIDDefaultsKey: "FitHappensAutomaticBackupInstallID",
+    enabledDefaultsKey: "FitHappensAutomaticBackupEnabled"
+  )
+
+  public static func isManuallyEnabled() -> Bool {
+    CloudSync.isManuallyEnabled(configuration: configuration)
+  }
+
+  public static func setManuallyEnabled(_ enabled: Bool) {
+    CloudSync.setManuallyEnabled(enabled, configuration: configuration)
+  }
+
+  public static func isDisabledByRestore() -> Bool {
+    CloudSync.isDisabledByRestore(configuration: configuration)
+  }
 
   public static func persistManualEnablementFromLaunchEnvironment() {
     CloudSync.persistManualEnablementFromLaunchEnvironment(configuration: configuration)
@@ -36,6 +72,8 @@ public enum FitHappensCloudSync {
 }
 
 public enum FitHappensDatabaseMigrations {
+  public static let schemaVersion = 2
+
   public static func makeMigrator() -> DatabaseMigrator {
     var migrator = DatabaseMigrator()
     migrator.registerMigration("Create Fit Happens core schema (ADR-0002, ADR-0003)") { database in
@@ -46,6 +84,30 @@ public enum FitHappensDatabaseMigrations {
       try #sql("ALTER TABLE \"workoutItems\" ADD COLUMN \"ramp\" TEXT").execute(database)
     }
     return migrator
+  }
+
+  public static func migrateRestoreCandidate(at databaseURL: URL) throws {
+    try withDependencies {
+      $0.context = .live
+    } operation: {
+      var configuration = Configuration()
+      configuration.prepareDatabase { database in
+        try database.attachMetadatabase(
+          containerIdentifier: FitHappensCloudSync.configuration.containerIdentifier
+        )
+      }
+      let database = try SQLiteData.defaultDatabase(
+        path: databaseURL.absoluteString,
+        configuration: configuration
+      )
+      do {
+        try makeMigrator().migrate(database)
+      } catch {
+        try? database.close()
+        throw error
+      }
+      try database.close()
+    }
   }
 
   private static func createProgramTables(in database: Database) throws {
@@ -110,6 +172,18 @@ public enum FitHappensDatabaseMigrations {
     try #sql(
       "CREATE INDEX \"index_completionItems_on_completionID\" ON \"completionItems\"(\"completionID\")"
     ).execute(database)
+  }
+}
+
+public enum FitHappensDatabaseStorage {
+  public static func liveDatabaseURL(fileManager: FileManager = .default) throws -> URL {
+    let applicationSupportDirectory = try fileManager.url(
+      for: .applicationSupportDirectory,
+      in: .userDomainMask,
+      appropriateFor: nil,
+      create: true
+    )
+    return applicationSupportDirectory.appendingPathComponent("SQLiteData.db", isDirectory: false)
   }
 }
 
