@@ -15,11 +15,20 @@ struct CloudKitExpectedFieldsTests {
       try syncedTables.reduce(into: Set<String>()) { fields, table in
         let columns = try String.fetchAll(
           connection,
-          sql: "SELECT name FROM pragma_table_info(?)",
+          sql: "SELECT name || '|' || type FROM pragma_table_info(?)",
           arguments: [table]
         )
+        fields.insert("\(table) sqlitedata_icloud_userModificationTime")
         for column in columns {
-          fields.insert("\(table) \(column)")
+          let components = column.split(separator: "|", maxSplits: 1)
+          guard components.count == 2 else { continue }
+          let name = String(components[0])
+          let type = String(components[1])
+          fields.insert("\(table) \(name)")
+          fields.insert("\(table) sqlitedata_icloud_userModificationTime_\(name)")
+          if type.uppercased() == "BLOB" {
+            fields.insert("\(table) \(name)_hash")
+          }
         }
       }
     }

@@ -3,7 +3,7 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
-## 2026-11-20 — TestFlight and Production Dispatch 1: App work (`effort/testflight-production-s2`)
+## 2026-11-20 — TestFlight and Production Dispatch 1: App work (`effort/testflight-production-s2`; jon-platform #155 `effort/testflight-app-group-optional`)
 
 - **Result:** Added the TestFlight release configuration and schema field contract, disabled sync by default with status reporting, and wired CloudSyncKit backup, restore, undo, and foreground automatic backup in the Program tab.
 - **Verification:** scripts/check-drift.sh passed: strict SwiftLint, 72 Core tests, 9 FitHappensMCP tests, 1 FitHappensInboxKit test, package resolution, iOS Simulator build, and check-handoff --strict. testflight --dry-run was not run because it requires the Team key.
