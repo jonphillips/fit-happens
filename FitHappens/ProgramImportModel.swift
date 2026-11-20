@@ -99,7 +99,6 @@ final class ProgramImportModel {
       errorMessage = nil
       path.removeAll()
       programText = ""
-      self.review = nil
       stagedURL = nil
       return true
     } catch {

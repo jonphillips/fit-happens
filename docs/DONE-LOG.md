@@ -3,6 +3,12 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-20 — Bundle ID and the review flash (`effort/bundle-id-and-review-flash`)
+
+- **Result:** Pinned the app bundle ID to com.jonphillips.fithappens and kept the reviewed program visible while the review route pops.
+- **Verification:** scripts/check-drift.sh passed; simulator CFBundleIdentifier: com.jonphillips.fithappens.
+- **Owed:** Bundle ID and the review flash Dispatch 1's device gate, in [device-passes.md](device-passes.md).
+
 ## 2026-11-20 — Tabs and ramps Dispatch 2: Ramped sets (`effort/ramped-sets`)
 
 - **Result:** Added ramp contracts, additive workout item storage, one resolver across workout and program displays, completion snapshots, and chat export; added MCP ramp read and proposal support.

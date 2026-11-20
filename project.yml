@@ -31,6 +31,9 @@ targets:
   FitHappens:
     type: application
     platform: iOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jonphillips.fithappens
     sources:
       - path: FitHappens
     entitlements:
