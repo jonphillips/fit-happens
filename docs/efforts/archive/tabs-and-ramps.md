@@ -13,7 +13,7 @@ Jon, 2026-11-20, during the M3 device passes:
   mistakes: the Activity calendar already shows what he did.
 - One lift is a ramp, 10 reps at 155, 8 at 165, then 6 at 175, and the program can't say that.
 
-Decisions: [PRODUCT.md](../PRODUCT.md) (the three tabs), ADR-0003 D3 (amended 2026-11-20), and
+Decisions: [PRODUCT.md](../../PRODUCT.md) (the three tabs), ADR-0003 D3 (amended 2026-11-20), and
 ADR-0002 D1 and D2 (amended 2026-11-20). The word is **ramp**, not "progression": Activity already
 has a progression line, and automated progression advice is a non-goal.
 
@@ -51,11 +51,11 @@ has a progression line, and automated progression advice is a non-goal.
 - **Ownership:** `ChatAccessExportModel` moves to the app root, and so does its background export on
   `scenePhase`, so the export doesn't depend on which tab was last open.
 - Keep every list row to one default-style button, or make each `.borderless`
-  ([list-row-buttons](archive/list-row-buttons.md)).
+  ([list-row-buttons](list-row-buttons.md)).
 
 **Done when:**
 - `scripts/check-drift.sh` passes, with the Core tests above and the inbox tests unchanged.
-- No simulator walkthrough ([verification.md](../verification.md)).
+- No simulator walkthrough ([verification.md](../../verification.md)).
 - Closeout (ADR-0005 D16). The device gate: on iPhone, three tabs. Program shows every workout with
   the next one marked, and a staged proposal badges the tab. Tapping "Last done" changes the date and
   undoes. Fix a workout in Activity changes an older completion's date.
@@ -110,7 +110,7 @@ it wrap. The stepper doesn't change.
 
 ## Open for Jon
 
-- **Queue.** This goes ahead of [TestFlight and Production](testflight-production.md). Dispatch 2 adds
+- **Queue.** This goes ahead of [TestFlight and Production](../testflight-production.md). Dispatch 2 adds
   a CloudKit field, so landing it first means the Production schema deploys with it. Adding it after
   the cutover would also work, but would need a second Production deploy.
 - **After Dispatch 2 merges,** do two things before the device pass, since ChatGPT learns the ramp

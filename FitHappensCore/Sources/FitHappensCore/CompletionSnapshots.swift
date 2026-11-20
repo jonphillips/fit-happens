@@ -56,9 +56,18 @@ public enum CompletionSnapshots {
       guard let prescription = workout.prescriptions[key] else {
         throw CompletionSnapshotError.missingPrescription(key)
       }
+      let workingWeight: Double? = {
+        switch load {
+        case let .weight(pounds): pounds
+        case .bodyweight: nil
+        }
+      }()
+      let resolvedPrescription = ProgramPrescriptionResolver.resolve(
+        prescription: prescription, ramp: workout.ramps[key], workingWeight: workingWeight
+      )
       return CompletionExerciseSnapshot(
         id: makeID(), exerciseKey: key, position: position,
-        name: exercise.name, prescription: prescription, load: load
+        name: exercise.name, prescription: resolvedPrescription, load: load
       )
     }
     return WorkoutCompletionSnapshot(

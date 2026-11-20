@@ -18,7 +18,12 @@ struct ChatExportTests {
     let program = CurrentProgram(
       exercises: [CurrentExercise(key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 145))],
       retiredExercises: [CurrentExercise(key: "curl", name: "Curl", loadKind: .weight, load: .weight(pounds: 20))],
-      workouts: [CurrentWorkout(key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": "3 × 5"])]
+      workouts: [CurrentWorkout(
+        key: "A", exerciseKeys: ["bench"], prescriptions: ["bench": ""],
+        ramps: ["bench": [
+          RampStep(reps: "10", offset: -20), RampStep(reps: "8", offset: -10), RampStep(reps: "6", offset: 0)
+        ]]
+      )]
     )
     let completion = Completion(id: completionID, workoutKey: "A", completedAt: day)
     let item = CompletionItem(
@@ -37,7 +42,9 @@ struct ChatExportTests {
     #expect(export.program.nextWorkoutKey == "A")
     #expect(export.program.exercises.first?.increment == 5)
     #expect(export.program.retiredExercises.first?.currentWeight == 20)
-    #expect(export.program.workouts.first?.items.first?.prescription == "3 × 5")
+    #expect(export.program.workouts.first?.items.first?.prescription == "10 @ 125 · 8 @ 135 · 6 @ 145")
+    #expect(export.program.workouts.first?.items.first?.ramp?.last?.offset == 0)
+    #expect(try FitHappensChatExport.decode(export.encoded()) == export)
     #expect(export.completions.first?.items.first?.loadPounds == 140)
     #expect(export.walks.first?.miles == nil)
     #expect(export.bodyMass.count == 1)

@@ -42,6 +42,9 @@ public enum FitHappensDatabaseMigrations {
       try createProgramTables(in: database)
       try createHistoryTables(in: database)
     }
+    migrator.registerMigration("Add workout item ramps (ADR-0002)") { database in
+      try #sql("ALTER TABLE \"workoutItems\" ADD COLUMN \"ramp\" TEXT").execute(database)
+    }
     return migrator
   }
 

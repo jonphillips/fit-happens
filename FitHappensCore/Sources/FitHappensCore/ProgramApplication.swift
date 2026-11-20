@@ -14,6 +14,12 @@ public enum ProgramApplication {
     var exerciseID: Exercise.ID
   }
 
+  private struct DesiredWorkoutItem {
+    var position: Int
+    var prescription: String
+    var ramp: String?
+  }
+
   private struct ExistingRows {
     var exercises: [Exercise]
     var exercisesByKey: [String: Exercise]
@@ -195,21 +201,24 @@ public enum ProgramApplication {
 
   private static func desiredWorkoutItems(
     _ contract: ProgramContract, exerciseIDs: [String: Exercise.ID], workoutIDs: [String: Workout.ID]
-  ) -> [ItemIdentity: (position: Int, prescription: String)] {
-    var desired: [ItemIdentity: (position: Int, prescription: String)] = [:]
+  ) -> [ItemIdentity: DesiredWorkoutItem] {
+    var desired: [ItemIdentity: DesiredWorkoutItem] = [:]
     for workout in contract.workouts {
       guard let workoutID = workoutIDs[workout.key] else { continue }
       for (position, exercise) in workout.items.enumerated() {
         guard let exerciseID = exerciseIDs[exercise.key] else { continue }
-        desired[ItemIdentity(workoutID: workoutID, exerciseID: exerciseID)] =
-          (position, exercise.prescription)
+        let ramp = exercise.ramp.flatMap { try? JSONEncoder().encode($0) }
+          .map { String(decoding: $0, as: UTF8.self) }
+        desired[ItemIdentity(workoutID: workoutID, exerciseID: exerciseID)] = DesiredWorkoutItem(
+          position: position, prescription: exercise.prescription, ramp: ramp
+        )
       }
     }
     return desired
   }
 
   private static func reconcileWorkoutItems(
-    _ desired: [ItemIdentity: (position: Int, prescription: String)],
+    _ desired: [ItemIdentity: DesiredWorkoutItem],
     existing: ExistingRows,
     in database: Database
   ) throws {
@@ -221,7 +230,8 @@ public enum ProgramApplication {
     for (identity, value) in desired {
       let record = WorkoutItem(
         id: existing.itemsByIdentity[identity]?.id ?? UUID(), workoutID: identity.workoutID,
-        exerciseID: identity.exerciseID, position: value.position, prescription: value.prescription
+        exerciseID: identity.exerciseID, position: value.position, prescription: value.prescription,
+        ramp: value.ramp
       )
       try WorkoutItem.upsert { WorkoutItem.Draft(record) }.execute(database)
     }

@@ -391,7 +391,8 @@ private struct AddedWorkoutReviewRow: View {
       Text("Added workout \(workout.key)")
         .font(.headline)
       ForEach(workout.items, id: \.key) { item in
-        Text("\(item.key) · \(item.prescription) · \(item.loadKind.rawValue)")
+        let prescription = item.ramp.map(ProgramPrescriptionResolver.relative) ?? item.prescription
+        Text("\(item.key) · \(prescription) · \(item.loadKind.rawValue)")
         if item.loadKind == .weight, let startingWeight = item.startingWeight {
           Text("Starting weight: \(startingWeight.formatted()) lb")
             .foregroundStyle(.secondary)

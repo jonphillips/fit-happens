@@ -29,11 +29,12 @@ public struct ProgramExercise: Codable, Equatable, Sendable {
   public var increment: Double?
   public var loadLabel: String?
   public var notes: String?
+  public var ramp: [RampStep]?
 
   public init(
     key: String, name: String, prescription: String, loadKind: LoadKind,
     startingWeight: Double? = nil, newWeight: Double? = nil, increment: Double? = nil,
-    loadLabel: String? = nil, notes: String? = nil
+    loadLabel: String? = nil, notes: String? = nil, ramp: [RampStep]? = nil
   ) {
     self.key = key
     self.name = name
@@ -44,6 +45,49 @@ public struct ProgramExercise: Codable, Equatable, Sendable {
     self.increment = increment
     self.loadLabel = loadLabel
     self.notes = notes
+    self.ramp = ramp
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case key, name, prescription, loadKind, startingWeight, newWeight, increment, loadLabel, notes, ramp
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    key = try container.decode(String.self, forKey: .key)
+    name = try container.decode(String.self, forKey: .name)
+    prescription = try container.decodeIfPresent(String.self, forKey: .prescription) ?? ""
+    loadKind = try container.decode(LoadKind.self, forKey: .loadKind)
+    startingWeight = try container.decodeIfPresent(Double.self, forKey: .startingWeight)
+    newWeight = try container.decodeIfPresent(Double.self, forKey: .newWeight)
+    increment = try container.decodeIfPresent(Double.self, forKey: .increment)
+    loadLabel = try container.decodeIfPresent(String.self, forKey: .loadLabel)
+    notes = try container.decodeIfPresent(String.self, forKey: .notes)
+    ramp = try container.decodeIfPresent([RampStep].self, forKey: .ramp)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(key, forKey: .key)
+    try container.encode(name, forKey: .name)
+    if !prescription.isEmpty { try container.encode(prescription, forKey: .prescription) }
+    try container.encode(loadKind, forKey: .loadKind)
+    try container.encodeIfPresent(startingWeight, forKey: .startingWeight)
+    try container.encodeIfPresent(newWeight, forKey: .newWeight)
+    try container.encodeIfPresent(increment, forKey: .increment)
+    try container.encodeIfPresent(loadLabel, forKey: .loadLabel)
+    try container.encodeIfPresent(notes, forKey: .notes)
+    try container.encodeIfPresent(ramp, forKey: .ramp)
+  }
+}
+
+public struct RampStep: Codable, Equatable, Sendable {
+  public var reps: String
+  public var offset: Double
+
+  public init(reps: String, offset: Double) {
+    self.reps = reps
+    self.offset = offset
   }
 }
 
@@ -82,6 +126,11 @@ public enum ProgramContractError: Error, Equatable, Sendable {
   case newWeightOnNewExercise(String)
   case newWeightOnBodyweight(String)
   case newWeightOnLoadKindChange(String)
+  case rampTooShort(String)
+  case emptyRampReps(String)
+  case invalidRampOffset(String)
+  case rampMissingTop(String)
+  case rampOnBodyweight(String)
 }
 
 public enum ProgramContractDecoder {
@@ -141,7 +190,7 @@ public enum ProgramContractDecoder {
         guard !item.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
           throw ProgramContractError.emptyExerciseName(item.key)
         }
-        guard !item.prescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard item.ramp != nil || !item.prescription.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
           throw ProgramContractError.emptyPrescription(item.key)
         }
         guard itemKeys.insert(item.key).inserted else {
@@ -164,8 +213,26 @@ public enum ProgramContractDecoder {
         if let increment = item.increment, !increment.isFinite || increment <= 0 {
           throw ProgramContractError.invalidIncrement(item.key)
         }
+        try validateRamp(item.ramp, for: item)
       }
     }
+  }
+
+  private static func validateRamp(_ ramp: [RampStep]?, for item: ProgramExercise) throws {
+    guard let ramp else {
+      return
+    }
+    guard ramp.count >= 2 else { throw ProgramContractError.rampTooShort(item.key) }
+    guard ramp.allSatisfy({ !$0.reps.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) else {
+      throw ProgramContractError.emptyRampReps(item.key)
+    }
+    guard ramp.allSatisfy({ $0.offset.isFinite && $0.offset <= 0 }) else {
+      throw ProgramContractError.invalidRampOffset(item.key)
+    }
+    guard ramp.contains(where: { $0.offset == 0 }) else {
+      throw ProgramContractError.rampMissingTop(item.key)
+    }
+    guard item.loadKind == .weight else { throw ProgramContractError.rampOnBodyweight(item.key) }
   }
 
   private static func extractJSONObject(from text: String) throws -> String {
@@ -270,11 +337,13 @@ public struct CurrentWorkout: Equatable, Sendable {
   public var key: String
   public var exerciseKeys: [String]
   public var prescriptions: [String: String]
+  public var ramps: [String: [RampStep]]
 
-  public init(key: String, exerciseKeys: [String], prescriptions: [String: String]) {
+  public init(key: String, exerciseKeys: [String], prescriptions: [String: String], ramps: [String: [RampStep]] = [:]) {
     self.key = key
     self.exerciseKeys = exerciseKeys
     self.prescriptions = prescriptions
+    self.ramps = ramps
   }
 }
 
@@ -569,36 +638,57 @@ public enum ProgramChanges {
     var memberships: [WorkoutMembershipChange] = []
     for workout in proposal {
       guard let old = existing[workout.key] else { continue }
-      let oldKeys = old.exerciseKeys
-      let newKeys = workout.items.map(\.key)
-      let oldSet = Set(oldKeys)
-      let newSet = Set(newKeys)
-      let additions = workout.items.filter { !oldSet.contains($0.key) }.map {
-        ProgramItemAddition(exerciseKey: $0.key, prescription: $0.prescription)
-      }
-      let removals = oldKeys.filter { !newSet.contains($0) }
-      var prescriptionChanges: [PrescriptionChange] = []
-      for item in workout.items where oldSet.contains(item.key) {
-        guard let oldPrescription = old.prescriptions[item.key], oldPrescription != item.prescription else { continue }
-        prescriptionChanges.append(.init(
-          workoutKey: workout.key, exerciseKey: item.key,
-          oldPrescription: oldPrescription, newPrescription: item.prescription
-        ))
-      }
-      let oldCommonOrder = oldKeys.filter { newSet.contains($0) }
-      let newCommonOrder = newKeys.filter { oldSet.contains($0) }
-      if !additions.isEmpty || !removals.isEmpty || !prescriptionChanges.isEmpty
-        || oldCommonOrder != newCommonOrder {
-        memberships.append(.init(
-          workoutKey: workout.key, addedItems: additions,
-          removedExerciseKeys: removals, prescriptionChanges: prescriptionChanges,
-          orderChanged: oldCommonOrder != newCommonOrder
-        ))
-      }
+      if let change = makeWorkoutMembershipChange(workout, previous: old) { memberships.append(change) }
     }
     return WorkoutChanges(
       added: added, removed: removed, memberships: memberships,
       orderChanged: currentCommonOrder != proposedCommonOrder
     )
+  }
+
+  private static func makeWorkoutMembershipChange(
+    _ workout: ProgramWorkout, previous old: CurrentWorkout
+  ) -> WorkoutMembershipChange? {
+    let oldKeys = old.exerciseKeys
+    let newKeys = workout.items.map(\.key)
+    let oldSet = Set(oldKeys)
+    let newSet = Set(newKeys)
+    let additions = workout.items.filter { !oldSet.contains($0.key) }.map {
+      ProgramItemAddition(
+        exerciseKey: $0.key,
+        prescription: $0.ramp.map(ProgramPrescriptionResolver.relative) ?? $0.prescription
+      )
+    }
+    let removals = oldKeys.filter { !newSet.contains($0) }
+    let prescriptionChanges = makePrescriptionChanges(workout, previous: old, oldKeys: oldSet)
+    let oldCommonOrder = oldKeys.filter { newSet.contains($0) }
+    let newCommonOrder = newKeys.filter { oldSet.contains($0) }
+    guard !additions.isEmpty || !removals.isEmpty || !prescriptionChanges.isEmpty
+      || oldCommonOrder != newCommonOrder else { return nil }
+    return WorkoutMembershipChange(
+      workoutKey: workout.key, addedItems: additions,
+      removedExerciseKeys: removals, prescriptionChanges: prescriptionChanges,
+      orderChanged: oldCommonOrder != newCommonOrder
+    )
+  }
+
+  private static func makePrescriptionChanges(
+    _ workout: ProgramWorkout, previous old: CurrentWorkout, oldKeys: Set<String>
+  ) -> [PrescriptionChange] {
+    workout.items.compactMap { item in
+      guard oldKeys.contains(item.key) else {
+        return nil
+      }
+      let oldPrescription = old.ramps[item.key].map(ProgramPrescriptionResolver.relative)
+        ?? old.prescriptions[item.key]
+      let newPrescription = item.ramp.map(ProgramPrescriptionResolver.relative) ?? item.prescription
+      guard let oldPrescription, oldPrescription != newPrescription else {
+        return nil
+      }
+      return PrescriptionChange(
+        workoutKey: workout.key, exerciseKey: item.key,
+        oldPrescription: oldPrescription, newPrescription: newPrescription
+      )
+    }
   }
 }

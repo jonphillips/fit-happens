@@ -50,7 +50,10 @@ public enum StagedProgram {
         CurrentWorkout(
           key: workout.key,
           exerciseKeys: workout.items.map(\.exerciseKey),
-          prescriptions: Dictionary(uniqueKeysWithValues: workout.items.map { ($0.exerciseKey, $0.prescription) })
+          prescriptions: Dictionary(uniqueKeysWithValues: workout.items.map { ($0.exerciseKey, $0.prescription) }),
+          ramps: Dictionary(uniqueKeysWithValues: workout.items.compactMap { item in
+            item.ramp.map { (item.exerciseKey, $0) }
+          })
         )
       }
     )

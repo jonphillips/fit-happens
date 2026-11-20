@@ -4,6 +4,52 @@ import SQLiteData
 import Testing
 
 struct ProgramApplicationTests {
+  @Test func rampPersistsResolvesSnapshotsAndCanBeRestoredOrRemoved() throws {
+    let database = try makeDatabase()
+    let ramp = [
+      RampStep(reps: "10", offset: -20), RampStep(reps: "8", offset: -10), RampStep(reps: "6", offset: 0)
+    ]
+    let original = try programText([ProgramWorkout(key: "A", items: [ProgramExercise(
+      key: "bench", name: "Bench", prescription: "", loadKind: .weight,
+      startingWeight: 175, ramp: ramp
+    )])])
+    _ = try ProgramApplication.apply(programText: original, to: database)
+    let current = try database.read(CurrentProgramQuery.fetch)
+    #expect(current.workouts[0].ramps["bench"] == ramp)
+    #expect(WorkoutOverview.make(program: current, latestCompletion: nil)?.exercises[0].prescription
+      == "10 @ 155 · 8 @ 165 · 6 @ 175")
+
+    let snapshot = try database.write { connection in
+      try WorkoutHistoryOperations.complete(
+        workoutKey: "A", at: Date(timeIntervalSince1970: 1), completionID: UUID(), makeID: UUID.init,
+        in: connection
+      )
+    }
+    #expect(snapshot.items[0].prescription == "10 @ 155 · 8 @ 165 · 6 @ 175")
+    #expect(snapshot.items[0].load == .weight(pounds: 175))
+
+    try database.write { connection in
+      let exercise = try #require(try Exercise.all.fetchAll(connection).first)
+      try WorkoutHistoryOperations.stepLoad(
+        exerciseID: exercise.id, direction: 1, configuredIncrement: nil, in: connection
+      )
+    }
+    let stepped = try database.read(CurrentProgramQuery.fetch)
+    #expect(WorkoutOverview.make(program: stepped, latestCompletion: nil)?.exercises[0].prescription
+      == "10 @ 160 · 8 @ 170 · 6 @ 180")
+    _ = try ProgramApplication.apply(programText: original, to: database, isStoredRevision: true)
+    let restored = try database.read(CurrentProgramQuery.fetch)
+    #expect(restored.exercises[0].load == .weight(pounds: 180))
+    #expect(restored.workouts[0].ramps["bench"] == ramp)
+
+    let straight = try programText([ProgramWorkout(key: "A", items: [ProgramExercise(
+      key: "bench", name: "Bench", prescription: "3 × 5", loadKind: .weight
+    )])])
+    _ = try ProgramApplication.apply(programText: straight, to: database)
+    let removed = try database.read(CurrentProgramQuery.fetch)
+    #expect(removed.workouts[0].ramps["bench"] == nil)
+    #expect(WorkoutOverview.make(program: removed, latestCompletion: nil)?.exercises[0].prescription == "3 × 5")
+  }
   @Test func firstImportCreatesCurrentRowsAndOneRevision() throws {
     let database = try makeDatabase()
     let text = try programText([
