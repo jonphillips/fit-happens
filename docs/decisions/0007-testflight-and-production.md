@@ -4,7 +4,7 @@
 [ADR-0001](0001-house-stack-and-sync.md)'s "one more CloudKit container to promote to Production
 before TestFlight". Adopts jon-platform ADR-0006 (backup and restore in `CloudSyncKit`) and ADR-0008
 (automatic backups). Prior art: galavant ADR-0049 (the cutover order this follows) and Yes Chef
-ADR-0056. Effort: [testflight-production](../efforts/archive/testflight-production.md).*
+ADR-0056. Effort: [testflight-production](../efforts/testflight-production.md).*
 
 Summary: Fit Happens ships to Jon's iPhone through TestFlight, built and uploaded by the always-on
 mini, so a merged dispatch reaches the phone wherever Jon is. That moves sync to CloudKit Production,

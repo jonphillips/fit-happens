@@ -7,7 +7,7 @@ Summary: Ship Fit Happens through TestFlight from the mini, so a merged dispatch
 
 Today a build reaches the phone only from Xcode, on a Mac at hand. With TestFlight, the always-on mini
 runs `testflight` after a merge, and Jon installs from the TestFlight app anywhere. Every device pass
-then runs on a TestFlight build. Decisions: [ADR-0007](../../decisions/0007-testflight-and-production.md).
+then runs on a TestFlight build. Decisions: [ADR-0007](../decisions/0007-testflight-and-production.md).
 
 ## Dispatch 1 — Build: `testflight` without an app group, then the app work
 
@@ -45,7 +45,7 @@ first.
   - Wire the kit's models as they are: Back Up Now through the share sheet; Restore… through the file
     importer, starting at `Documents/Backups/`; Undo Last Restore; the confirmed re-enable of sync;
     and the automatic backup on foreground.
-- **The Program screen** (the Program tab, after [tabs-and-ramps](tabs-and-ramps.md)) gets one **iCloud** section below Chat Access (D4). It holds the switch and
+- **The Program screen** (the Program tab, after [tabs-and-ramps](archive/tabs-and-ramps.md)) gets one **iCloud** section below Chat Access (D4). It holds the switch and
   its status line, Back Up Now, Restore…, Undo Last Restore (shown only when the kit has one), and the
   automatic backup's status.
 - **Tests (Core).**
@@ -67,6 +67,30 @@ first.
 - Closeout (ADR-0005 D16). The device gate: on a development build, Back Up Now writes a file, and a
   restore of it on the same phone brings back the same program and history. The automatic backup
   appears, and the switch starts and stops sync.
+
+*Done 2026-11-20: jon-platform #155 and #28. The device gate is owed.*
+
+## Dispatch 2 — Build: `build.sh`'s fixture path
+
+**S1 — jon-platform `scripts/tests/build.sh`.** This is a jon-platform PR. The suite fails on
+`main`, and it showed up in the verification for jon-platform #155.
+- **The symptom.** `bash scripts/tests/build.sh` under Homebrew bash 5 exits 1 at
+  `[[ "$(cat "$STUB_ROOT/cwd")" == "$RESOLVED_REPO" ]]`. The `xcodebuild` stub records the logical
+  `$PWD` (`/var/folders/…`), but `RESOLVED_REPO` comes from `pwd -P` (`/private/var/folders/…`).
+  The suite passes when it runs directly through its `#!/bin/bash` shebang, and under `/bin/bash`.
+- **The fix.** In the stub, write `pwd -P > "$STUB_ROOT/cwd"` in place of
+  `printf '%s\n' "$PWD" > "$STUB_ROOT/cwd"`. Change nothing else. The architect tried this
+  against `main`, and the suite passed all three ways.
+- **Verification.** List all three runs: `scripts/tests/build.sh`, `/bin/bash scripts/tests/build.sh`,
+  and `bash scripts/tests/build.sh`. Each must print `build checks passed`.
+
+**S2 — The app's records.** The companion PR here has no code. It adds the `DONE-LOG.md` entry naming
+both branches and the jon-platform PR, and it advances `NEXT_UP.md`. Nothing is dispatched after
+this; the cutover is Jon's. So the advance leaves `NEXT_UP.md` empty, and the effort stays live
+until the cutover is recorded.
+
+**Done when:** S1's PR is merged with its three runs listed, and S2 is merged. There's no device
+gate.
 
 ## Then — Jon's cutover (ADR-0007 D5)
 
@@ -98,7 +122,7 @@ Rollback, through step 8: reinstall a development build. Development and its dat
 
 ## Open for Jon
 
-- **When.** *Updated 2026-11-20:* queued after [Three tabs, and ramped sets](tabs-and-ramps.md), whose ramp column should be in the Production schema. Originally queued after M3 Dispatch 2. If remote device passes matter sooner, this can go ahead of
+- **When.** *Updated 2026-11-20:* queued after [Three tabs, and ramped sets](archive/tabs-and-ramps.md), whose ramp column should be in the Production schema. Originally queued after M3 Dispatch 2. If remote device passes matter sooner, this can go ahead of
   M3 Dispatch 2. Then PR #15's `NEXT_UP.md` advance would point here instead.
 - **The 90-day expiry.** A TestFlight build stops launching after 90 days. A finished app still needs
   a `testflight` run each quarter. It could be a scheduled task on the mini, or just a reminder.
