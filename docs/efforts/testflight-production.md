@@ -1,6 +1,6 @@
 # Effort — TestFlight and Production
 
-Status: Designed
+Status: Ready
 Summary: Ship Fit Happens through TestFlight from the mini, so a merged dispatch reaches Jon's iPhone wherever he is. The app gets a sync switch, the push entitlement, and CloudSyncKit backup and restore, and then moves to CloudKit Production (ADR-0007).
 
 ## Why
@@ -27,8 +27,8 @@ first.
     `CLOUDKIT_CONTAINER=iCloud.com.jonphillips.fithappens`, `SCHEMA_GATE=1`,
     `EXPECTED_SCHEMA_FIELDS=cloudkit-expected-fields.txt`, the `DONE_LOG` and `DEVICE_PASSES` paths,
     and `ASC_VERSION` and `TEAM_ID` matching Galavant's file.
-  - Add `cloudkit-expected-fields.txt`, listing every column of the six synced tables from the
-    migration.
+  - Add `cloudkit-expected-fields.txt`, listing every column of the six synced tables from every
+    migration, including `workoutItems.ramp`.
   - In `project.yml`, set `CURRENT_PROJECT_VERSION` with Galavant's
     floor-value comment.
   - In `Info.plist`, set `ITSAppUsesNonExemptEncryption` to `NO`.
