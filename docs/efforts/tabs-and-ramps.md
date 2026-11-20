@@ -113,7 +113,13 @@ it wrap. The stepper doesn't change.
 - **Queue.** This goes ahead of [TestFlight and Production](testflight-production.md). Dispatch 2 adds
   a CloudKit field, so landing it first means the Production schema deploys with it. Adding it after
   the cutover would also work, but would need a second Production deploy.
-- **After Dispatch 2,** copy the updated instructions from the Program tab into the ChatGPT Project.
-  Until then, the paste path doesn't know about ramps, but chat access does.
+- **After Dispatch 2 merges,** do two things before the device pass, since ChatGPT learns the ramp
+  format only from the new instructions:
+  1. Reinstall the helper with `install-mcp-helper` ([chat-access-setup.md](../chat-access-setup.md)),
+     then start a new chat. The helper sends the instructions it was built with.
+  2. Copy the instructions from the Program tab into the ChatGPT Project, for the paste path.
+
+  Don't update the instructions before that. Until Dispatch 2, the app ignores a `ramp` field, so it
+  would reject a ramp item that has no prescription.
 - **Until it ships,** a ramp can be plain text: prescription `10 @ 155 · 8 @ 165 · 6 @ 175` with a
   working weight of 175. The text won't move with the stepper.
