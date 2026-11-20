@@ -3,7 +3,7 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
-## 2026-11-20 — Bundle ID and the review flash (`codex/bundle-id-review-flash`)
+## 2026-11-20 — Bundle ID and the review flash (`effort/bundle-id-and-review-flash`)
 
 - **Result:** Pinned the app bundle ID to com.jonphillips.fithappens and kept the reviewed program visible while the review route pops.
 - **Verification:** scripts/check-drift.sh passed; simulator CFBundleIdentifier: com.jonphillips.fithappens.
