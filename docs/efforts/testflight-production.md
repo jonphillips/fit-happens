@@ -23,7 +23,7 @@ first.
 
 **S2 — The app (ADR-0007 D1–D4).** This is the companion PR, after S1 merges.
 - **Release config.**
-  - Add `testflight.conf`, with `APP_BUNDLE_ID=com.jonphillips.FitHappens`, no `APP_GROUP`,
+  - Add `testflight.conf`, with `APP_BUNDLE_ID=com.jonphillips.fithappens`, no `APP_GROUP`,
     `CLOUDKIT_CONTAINER=iCloud.com.jonphillips.fithappens`, `SCHEMA_GATE=1`,
     `EXPECTED_SCHEMA_FIELDS=cloudkit-expected-fields.txt`, the `DONE_LOG` and `DEVICE_PASSES` paths,
     and `ASC_VERSION` and `TEAM_ID` matching Galavant's file.
@@ -76,7 +76,7 @@ step is done, the architect records it in `DONE-LOG.md`.
 1. **One-time, if not done yet.**
    - The mini's `testflight` setup (jon-platform `always-on-mac.md`, Phase 2 step 5).
    - A Remote Control server for this repo on the mini (`rc-server install ~/code/fit-happens`).
-   - The App Store Connect app record for `com.jonphillips.FitHappens`, with Jon as an internal
+   - The App Store Connect app record for `com.jonphillips.fithappens`, with Jon as an internal
      tester.
 2. **`testflight --no-upload`** from clean `main` on the mini. This proves signing, the entitlements
    (`aps-environment`, the container, no app group), and the schema gate's Development export.
