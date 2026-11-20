@@ -6,7 +6,7 @@ audience, and GitHub PR state is the only status.
 
 | Doc | Holds | Reader |
 | --- | --- | --- |
-| [PRODUCT.md](PRODUCT.md) | What the app is, the two screens, the phases, and the non-goals | Everyone, before adding anything |
+| [PRODUCT.md](PRODUCT.md) | What the app is, the three tabs, the phases, and the non-goals | Everyone, before adding anything |
 | [decisions/](decisions/README.md) | Settled choices (ADR-0001 to ADR-0007) | Everyone, before proposing architecture |
 | [NEXT_UP.md](NEXT_UP.md) | Exactly one dispatch | **Executor** (its only planning input); architect |
 | [milestones/](milestones/README.md) | Live build orders | Architect; executor only via `NEXT_UP.md` |

@@ -37,6 +37,27 @@ wherever a stepper reads an exercise's increment, never written back to the row.
 so the steppers had nothing to step by. A default keeps the real program importable as-is; a lift
 that moves by something else says so in the contract.
 
+*Amended 2026-11-20, Jon's call:* **a weighted item may be a ramp**, such as 10 reps at 155, 8 at
+165, then 6 at 175. `workoutItems` gains an optional `ramp`: an ordered list of steps, each with reps
+as text ("10", "8–10") and an offset in pounds from the working weight. The **working weight is the
+heaviest step**, so at least one offset is 0 and none is above it. The app shows each step as working
+weight + offset ("10 @ 155 · 8 @ 165 · 6 @ 175"). The stepper still moves the one working weight,
+and the whole ramp moves with it. A step that would come out below 0 shows 0.
+This is the one computation on a prescription, and it's arithmetic on the working weight, not
+progression advice. The rest of D1 holds:
+
+- **One weight per exercise.** An exercise ramped in one workout and done straight in another uses
+  the same working weight in both. If they really differ, it's a different key.
+- **Offsets, not percentages, and not one weight per set.** Jon's jumps are flat pounds, and
+  percentages would need plate rounding. A weight per set would need a stepper per set, and it would
+  drift out of step with the one working weight that history and Activity's progression line read.
+- **One resolver.** Core turns an item into its display prescription in one place: the ramp written
+  out against the current working weight, or else the prescription text. The overview, the Program
+  tab, the completion snapshot (ADR-0003), and the chat export all read it, and nothing reads the
+  stored text of a ramped item directly.
+- The ramp is stored as JSON text in its column, since nothing queries it (jon-platform
+  `persistence-and-sync.md`). The column is additive, so the CloudKit schema gains one field.
+
 ### D2 — The contract
 
 A versioned block with a `HandoffContractMarker` (LLMHandoffKit), using the marker line
@@ -59,6 +80,16 @@ and notes. Rules:
   earlier program never rolls weights back. The marker stays `v1`: the field is additive, and the
   only readers are this app and its helper, built from the same Core. The app still computes no
   progression; a chat proposes and Jon approves.
+- *Amended 2026-11-20:* **an item may carry `ramp`** instead of a prescription (D1):
+  `"ramp": [{"reps": "10", "offset": -20}, {"reps": "8", "offset": -10}, {"reps": "6", "offset": 0}]`.
+  With a ramp, `prescription` may be left out. If it's there, it's ignored, and the review says so,
+  as with an ignored starting weight. A ramp needs at least two steps, non-empty reps, finite
+  offsets, at least one offset of 0, and none above 0. It's an error on a bodyweight item. Like
+  `newWeight`, the field is additive, so the marker stays `v1`. A stored contract without ramps
+  still means what it meant. In the review, a ramp that's added, removed, or changed is a prescription
+  change, written in relative form ("10 @ −20 · 8 @ −10 · 6 @ top"), since the same proposal may move
+  the weight. `get_program` gives a ramped item both its `ramp` and the written-out prescription, so a
+  chat that echoes the program back keeps the ramp (ADR-0006 D3).
 - **A key that disappears retires the exercise.** It stays in history and is never deleted.
 - Workouts and `workoutItems` are current-program rows. Apply deletes a workout or item that the
   accepted contract removes; completion snapshots and `programRevisions` remain independent.
@@ -96,4 +127,4 @@ lift's step changed. That matters more once a chat stages proposals Jon didn't t
 - The Markdown repo is retired as the source of truth after the first import.
 - Key uniqueness can't be a database constraint under CloudKit. The importer looks up by key, and M1
   decides how a duplicate (two devices applying at once) resolves, per `persistence-and-sync.md`.
-- The review screen is a third screen, justified because it's the only way to change the program.
+- The review screen is justified because it's the only way to change the program. (Since 2026-11-20 it's reached from the Program tab, PRODUCT.md.)

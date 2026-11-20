@@ -61,6 +61,8 @@ The switch gates only chat access, and M4 decides how readings are gated.
   the last completion's date and key. The weight field is named `currentWeight`, which isn't a
   contract field, so a chat that echoes the program back changes no weights. A change is a deliberate
   `newWeight` (ADR-0002 D2, amended).
+  *Amended 2026-11-20:* a ramped item also gives its `ramp`, and its prescription is the ramp written
+  out with weights (ADR-0002 D1). The field is additive, so the export stays version 1.
 - **`get_history(days, exercise?)`:** completions in the window (default 90 days, at most 365): the
   date, the workout key, and each item's key and snapshot load. With `exercise`, only that key. For
   each key, it also lists the dates its snapshot load changed. That's the progression a chat
