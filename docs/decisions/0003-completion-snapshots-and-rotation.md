@@ -32,6 +32,15 @@ If the latest completion's workout no longer exists, start from the first.
   accidental tap, so this matters more than undo.
 - A short history list is the surface for both. It isn't a log browser.
 
+*Amended 2026-11-20, Jon's call, with the tab reshape (PRODUCT.md):* there are two surfaces, and both
+fix errors rather than browse. Tapping the **Last done** line on Next Workout corrects the latest
+completion, the usual case right after tapping Complete. The list sits behind **Fix a workout** in
+Activity, for an older date. The calendar is how Jon sees what he did, so the list stays a correction
+tool with no detail view.
+
+A ramped item (ADR-0002 D1, amended 2026-11-20) snapshots its prescription written out with weights
+("10 @ 155 · 8 @ 165 · 6 @ 175") and the working weight as its load, so D1's columns are unchanged.
+
 ### D4 — The honest ceiling
 
 History records what was **prescribed**, not what was performed. Skipping an exercise or doing fewer

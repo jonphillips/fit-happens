@@ -13,29 +13,46 @@ One user (Jon), one iPhone, following a fixed strength program that alternates W
 Workout B, usually every other day. He doesn't want to log sets or reps, or touch the phone during
 a workout. Strong and Hevy are logging products; this is not.
 
-## The two experiences
+## The three tabs
+
+*Reshaped 2026-11-20 (Jon): the toolbar buttons on Next Workout held too much, History became an
+error-fixing tool inside Activity, and the Program button became a tab that also shows the whole
+program.*
 
 ### 1. Next Workout (the launch screen)
 
 - Which workout is next (A, B, …) and when the previous one was done.
-- The exercises in order: name, prescription as written ("3 × 5–8"), and the working weight.
+- The exercises in order: name, prescription as written ("3 × 5–8") or as a ramp
+  ("10 @ 155 · 8 @ 165 · 6 @ 175", ADR-0002 D1), and the working weight.
 - Weight changes by stepper, in each exercise's own increment. Bodyweight exercises show no weight.
+  This is the only place a weight changes by hand.
 - A prominent **Complete Workout**. It records a snapshot and advances the rotation.
-- Corrections: undo the last completion, and change a completion's date ("I did it yesterday").
+- The "Last done" line is the quick correction: tap it to change that workout's date ("I did it
+  yesterday") or undo it (ADR-0003 D3).
 - When Apple Health has a strength workout that ended recently and isn't linked yet, the app offers
   to mark the next workout done with that workout's time (ADR-0004). This makes the Watch session Jon
   already starts the usual path to completion.
+- No toolbar.
 
-### 2. Activity (read-only)
+### 2. Activity (read-only, plus one way to fix a mistake)
 
 "What have I been doing physically over the last few weeks?" with no extra logging:
 
 - A four-week calendar: strength days, recorded-walk days, both, neither.
 - The latest body weight.
 - One strength progression line (e.g. bench today vs. 90 days ago).
+- A **Fix a workout** row that opens the list of completed workouts, for changing a date or undoing
+  the latest. It's there for errors, not for browsing; the calendar answers "what did I do".
 
 No streaks, goals, badges, or exhortations. Totals beyond what the calendar shows are deliberately
 left out until they're missed.
+
+### 3. Program
+
+- The whole current program, every workout in rotation order with the next one marked: each
+  exercise's name, prescription, and working weight. View-only.
+- Below it, the ways the program changes: proposals from chat, paste, Chat Access, the instructions
+  for ChatGPT, and accepted revisions. Waiting proposals badge the tab.
 
 ## How the program changes
 
