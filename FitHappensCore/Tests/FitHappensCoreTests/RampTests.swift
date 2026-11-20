@@ -33,8 +33,19 @@ struct RampContractTests {
     #expect(throws: ProgramContractError.rampOnBodyweight("bench")) {
       try validate([RampStep(reps: "8", offset: -5), RampStep(reps: "5", offset: 0)], loadKind: .bodyweight)
     }
-    #expect(ProgramErrorMessage.message(for: ProgramContractError.rampMissingTop("bench"))
-      == "Ramp for exercise bench needs a step with offset 0.")
+  }
+
+  @Test func eachRampErrorHasItsReviewMessage() {
+    let cases: [(ProgramContractError, String)] = [
+      (.rampTooShort("bench"), "Exercise bench needs at least two ramp steps."),
+      (.emptyRampReps("bench"), "Every ramp step for exercise bench needs reps."),
+      (.invalidRampOffset("bench"), "Ramp offsets for exercise bench must be finite and at or below 0."),
+      (.rampMissingTop("bench"), "Ramp for exercise bench needs a step with offset 0."),
+      (.rampOnBodyweight("bench"), "Bodyweight exercise bench must omit ramp.")
+    ]
+    for (error, message) in cases {
+      #expect(ProgramErrorMessage.message(for: error) == message)
+    }
   }
 
   @Test func allowsWorkoutSpecificRampsForTheSameExerciseKey() throws {
@@ -70,9 +81,7 @@ struct RampContractTests {
       workoutKey: "A", exerciseKey: "bench", oldPrescription: "10 @ −20 · 6 @ top",
       newPrescription: "10 @ −25 · 8 @ −10 · 6 @ top"
     )])
-    #expect(changes.ignoredPrescriptions == [IgnoredPrescription(
-      workoutKey: "A", exerciseKey: "bench", prescription: "ignored"
-    )])
+    #expect(changes.workoutChanges[0].prescriptionChanges.count == 1)
     #expect(ProgramPrescriptionResolver.resolve(
       prescription: "ignored", ramp: [RampStep(reps: "8", offset: -5), RampStep(reps: "5", offset: 0)],
       workingWeight: 2.5
@@ -103,6 +112,32 @@ struct RampContractTests {
     #expect(removed.workoutChanges[0].prescriptionChanges == [PrescriptionChange(
       workoutKey: "A", exerciseKey: "bench", oldPrescription: "10 @ −20 · 6 @ top", newPrescription: "3 × 5"
     )])
+  }
+
+  @Test func echoingExportedRampPrescriptionIsNoChange() throws {
+    let ramp = [RampStep(reps: "10", offset: -20), RampStep(reps: "8", offset: -10), RampStep(reps: "6", offset: 0)]
+    let export = FitHappensChatExport(
+      generatedAt: Date(timeIntervalSince1970: 1), device: "iPhone",
+      program: ChatProgram(
+        workouts: [ChatWorkout(key: "A", items: [ChatWorkoutItem(
+          exerciseKey: "bench", prescription: "10 @ 125 · 8 @ 135 · 6 @ 145", name: "Bench",
+          loadKind: .weight, currentWeight: 145, increment: 5, loadLabel: nil, notes: nil, ramp: ramp
+        )])],
+        exercises: [ChatExercise(
+          key: "bench", name: "Bench", loadKind: .weight, currentWeight: 145,
+          increment: 5, loadLabel: nil, notes: nil
+        )],
+        retiredExercises: [], nextWorkoutKey: "A", lastCompletion: nil
+      ),
+      completions: [], walks: [], bodyMass: []
+    )
+    let proposal = """
+    FH-PROGRAM: v1
+    {"workouts":[{"key":"A","items":[{"key":"bench","name":"Bench","loadKind":"weight",
+      "prescription":"10 @ 125 · 8 @ 135 · 6 @ 145",
+      "ramp":[{"reps":"10","offset":-20},{"reps":"8","offset":-10},{"reps":"6","offset":0}]}]}]}
+    """
+    #expect(StagedProgram.check(text: proposal, export: export) == .valid(.init(changeSummary: "No changes")))
   }
 }
 

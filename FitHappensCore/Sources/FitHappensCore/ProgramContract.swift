@@ -415,19 +415,11 @@ public struct ProgramItemAddition: Equatable, Sendable {
   public var prescription: String
 }
 
-public struct IgnoredPrescription: Equatable, Sendable {
-  public var workoutKey: String
-  public var exerciseKey: String
-  public var prescription: String
-  public var id: String { "\(workoutKey):\(exerciseKey)" }
-}
-
 public struct WorkoutMembershipChange: Equatable, Sendable {
   public var workoutKey: String
   public var addedItems: [ProgramItemAddition]
   public var removedExerciseKeys: [String]
   public var prescriptionChanges: [PrescriptionChange]
-  public var ignoredPrescriptions: [IgnoredPrescription]
   public var orderChanged: Bool
 }
 
@@ -455,7 +447,6 @@ public struct ProgramChangeSet: Equatable, Sendable {
   public var incrementChanges: [IncrementChange]
   public var loadLabelChanges: [OptionalTextChange]
   public var notesChanges: [OptionalTextChange]
-  public var ignoredPrescriptions: [IgnoredPrescription]
 }
 
 public enum ProgramChanges {
@@ -507,15 +498,7 @@ public enum ProgramChanges {
       ignoredNewWeights: exerciseChanges.ignoredNewWeights.sorted { $0.exerciseKey < $1.exerciseKey },
       incrementChanges: exerciseChanges.incrementChanges.sorted { $0.exerciseKey < $1.exerciseKey },
       loadLabelChanges: exerciseChanges.loadLabelChanges.sorted { $0.exerciseKey < $1.exerciseKey },
-      notesChanges: exerciseChanges.notesChanges.sorted { $0.exerciseKey < $1.exerciseKey },
-      ignoredPrescriptions: proposal.workouts.flatMap { workout in
-        workout.items.compactMap { item in
-          guard item.ramp != nil, !item.prescription.isEmpty else {
-            return nil
-          }
-          return IgnoredPrescription(workoutKey: workout.key, exerciseKey: item.key, prescription: item.prescription)
-        }
-      }
+      notesChanges: exerciseChanges.notesChanges.sorted { $0.exerciseKey < $1.exerciseKey }
     )
   }
 
@@ -678,20 +661,14 @@ public enum ProgramChanges {
     }
     let removals = oldKeys.filter { !newSet.contains($0) }
     let prescriptionChanges = makePrescriptionChanges(workout, previous: old, oldKeys: oldSet)
-    let ignoredPrescriptions = workout.items.compactMap { item -> IgnoredPrescription? in
-      guard oldSet.contains(item.key), item.ramp != nil, !item.prescription.isEmpty else {
-        return nil
-      }
-      return IgnoredPrescription(workoutKey: workout.key, exerciseKey: item.key, prescription: item.prescription)
-    }
     let oldCommonOrder = oldKeys.filter { newSet.contains($0) }
     let newCommonOrder = newKeys.filter { oldSet.contains($0) }
     guard !additions.isEmpty || !removals.isEmpty || !prescriptionChanges.isEmpty
-      || !ignoredPrescriptions.isEmpty || oldCommonOrder != newCommonOrder else { return nil }
+      || oldCommonOrder != newCommonOrder else { return nil }
     return WorkoutMembershipChange(
       workoutKey: workout.key, addedItems: additions,
       removedExerciseKeys: removals, prescriptionChanges: prescriptionChanges,
-      ignoredPrescriptions: ignoredPrescriptions, orderChanged: oldCommonOrder != newCommonOrder
+      orderChanged: oldCommonOrder != newCommonOrder
     )
   }
 

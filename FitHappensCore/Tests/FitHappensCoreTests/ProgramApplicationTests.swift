@@ -30,10 +30,13 @@ struct ProgramApplicationTests {
 
     try database.write { connection in
       let exercise = try #require(try Exercise.all.fetchAll(connection).first)
-      var updated = exercise
-      updated.currentLoadPounds = 180
-      try Exercise.upsert { Exercise.Draft(updated) }.execute(connection)
+      try WorkoutHistoryOperations.stepLoad(
+        exerciseID: exercise.id, direction: 1, configuredIncrement: nil, in: connection
+      )
     }
+    let stepped = try database.read(CurrentProgramQuery.fetch)
+    #expect(WorkoutOverview.make(program: stepped, latestCompletion: nil)?.exercises[0].prescription
+      == "10 @ 160 · 8 @ 170 · 6 @ 180")
     _ = try ProgramApplication.apply(programText: original, to: database, isStoredRevision: true)
     let restored = try database.read(CurrentProgramQuery.fetch)
     #expect(restored.exercises[0].load == .weight(pounds: 180))

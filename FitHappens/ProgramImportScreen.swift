@@ -268,7 +268,6 @@ private struct ExerciseChangesSection: View {
       || !changes.ignoredStartingWeights.isEmpty || !changes.weightChanges.isEmpty
       || !changes.ignoredNewWeights.isEmpty || !changes.incrementChanges.isEmpty
       || !changes.loadLabelChanges.isEmpty || !changes.notesChanges.isEmpty
-      || !changes.ignoredPrescriptions.isEmpty
   }
 
   var body: some View {
@@ -332,12 +331,6 @@ private struct ExerciseChangeRows: View {
         value: "\(ignored.proposedPounds.formatted()) lb proposed; \(ignored.keptLoad.reviewDescription) kept"
       )
     }
-    ForEach(changes.ignoredPrescriptions, id: \.id) { ignored in
-      LabeledContent(
-        "\(ignored.workoutKey) · \(ignored.exerciseKey)",
-        value: "Prescription ‘\(ignored.prescription)’ ignored; ramp is used"
-      )
-    }
     ForEach(changes.incrementChanges, id: \.exerciseKey) { change in
       LabeledContent(
         "Increment · \(change.exerciseKey)",
@@ -366,7 +359,6 @@ private struct WorkoutChangesSection: View {
   var hasChanges: Bool {
     !changes.addedWorkouts.isEmpty || !changes.removedWorkoutKeys.isEmpty
       || changes.workoutOrderChanged || !changes.workoutChanges.isEmpty
-      || !changes.ignoredPrescriptions.isEmpty
   }
 
   var body: some View {

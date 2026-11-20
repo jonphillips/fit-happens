@@ -6,7 +6,7 @@ History, newest first. The PR that completes a dispatch adds its entry naming it
 ## 2026-11-20 — Tabs and ramps Dispatch 2: Ramped sets (`effort/ramped-sets`)
 
 - **Result:** Added ramp contracts, additive workout item storage, one resolver across workout and program displays, completion snapshots, and chat export; added MCP ramp read and proposal support.
-- **Verification:** scripts/check-drift.sh passed: strict SwiftLint, 67 Core tests, 9 FitHappensMCP tests, 1 FitHappensInboxKit test, package resolution, pinned iOS Simulator build, and check-handoff --strict.
+- **Verification:** scripts/check-drift.sh passed: strict SwiftLint, 69 Core tests, 9 FitHappensMCP tests, 1 FitHappensInboxKit test, package resolution, pinned iOS Simulator build, and check-handoff --strict.
 - **Owed:** Tabs and ramps Dispatch 2's device gate, in [device-passes.md](device-passes.md).
 
 ## 2026-11-20 — Three tabs (`effort/three-tabs`)
