@@ -110,7 +110,7 @@ it wrap. The stepper doesn't change.
 
 ## Open for Jon
 
-- **Queue.** This goes ahead of [TestFlight and Production](testflight-production.md). Dispatch 2 adds
+- **Queue.** This goes ahead of [TestFlight and Production](../testflight-production.md). Dispatch 2 adds
   a CloudKit field, so landing it first means the Production schema deploys with it. Adding it after
   the cutover would also work, but would need a second Production deploy.
 - **After Dispatch 2 merges,** do two things before the device pass, since ChatGPT learns the ramp
