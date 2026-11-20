@@ -84,13 +84,19 @@ public enum CurrentProgramQuery {
         }
         return (exercise, item)
       }
+      let decodedRamps = activeItems.compactMap { pair -> (String, [RampStep])? in
+        guard let encoded = pair.1.ramp, let data = encoded.data(using: .utf8),
+              let ramp = try? JSONDecoder().decode([RampStep].self, from: data) else { return nil }
+        return (pair.0.key, ramp)
+      }
       return CurrentWorkout(
         key: workout.key,
         exerciseKeys: activeItems.map { $0.0.key },
         prescriptions: Dictionary(
           activeItems.map { ($0.0.key, $0.1.prescription) },
           uniquingKeysWith: { first, _ in first }
-        )
+        ),
+        ramps: Dictionary(decodedRamps, uniquingKeysWith: { first, _ in first })
       )
     }
   }

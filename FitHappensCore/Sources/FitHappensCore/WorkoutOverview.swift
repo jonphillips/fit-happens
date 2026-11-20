@@ -60,8 +60,18 @@ public struct ProgramOverview: Equatable, Sendable {
           guard let exercise = exercisesByKey[key], let prescription = workout.prescriptions[key] else {
             return nil
           }
+          let workingWeight: Double? = {
+            switch exercise.load {
+            case let .weight(pounds): pounds
+            case .bodyweight, nil: nil
+            }
+          }()
+          let ramp = workout.ramps[key]
           return WorkoutOverviewExercise(
-            key: exercise.key, name: exercise.name, prescription: prescription,
+            key: exercise.key, name: exercise.name,
+            prescription: ProgramPrescriptionResolver.resolve(
+              prescription: prescription, ramp: ramp, workingWeight: workingWeight
+            ),
             loadKind: exercise.loadKind, loadPounds: exercise.load?.pounds,
             increment: exercise.increment, loadLabel: exercise.loadLabel
           )

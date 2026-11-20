@@ -62,6 +62,7 @@ public struct ChatWorkoutItem: Codable, Equatable, Sendable {
   public var increment: Double
   public var loadLabel: String?
   public var notes: String?
+  public var ramp: [RampStep]?
 }
 
 public struct ChatExercise: Codable, Equatable, Sendable {
@@ -180,19 +181,26 @@ public enum FitHappensChatExportBuilder {
   private static func makeWorkouts(
     _ workouts: [CurrentWorkout], exercisesByKey: [String: ChatExercise]
   ) -> [ChatWorkout] {
-    workouts.map { workout in
+    var result: [ChatWorkout] = []
+    for workout in workouts {
       let items = workout.exerciseKeys.compactMap { key -> ChatWorkoutItem? in
         guard let exercise = exercisesByKey[key], let prescription = workout.prescriptions[key] else {
           return nil
         }
+        let workingWeight = exercise.loadKind == .weight ? exercise.currentWeight : nil
+        let ramp = workout.ramps[key]
         return ChatWorkoutItem(
-          exerciseKey: key, prescription: prescription, name: exercise.name,
+          exerciseKey: key,
+          prescription: ProgramPrescriptionResolver.resolve(
+            prescription: prescription, ramp: ramp, workingWeight: workingWeight
+          ), name: exercise.name,
           loadKind: exercise.loadKind, currentWeight: exercise.currentWeight,
-          increment: exercise.increment, loadLabel: exercise.loadLabel, notes: exercise.notes
+          increment: exercise.increment, loadLabel: exercise.loadLabel, notes: exercise.notes, ramp: ramp
         )
       }
-      return ChatWorkout(key: workout.key, items: items)
+      result.append(ChatWorkout(key: workout.key, items: items))
     }
+    return result
   }
 
   private static func dailyBodyMass(

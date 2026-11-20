@@ -37,6 +37,39 @@ struct FitHappensMCPTests {
     #expect(!response.text.contains(home.path))
   }
 
+  @Test func getProgramIncludesRampAndProposalStagesValidRampButRejectsInvalidRamp() async throws {
+    let rampExport = validExport().replacingOccurrences(
+      of: "\"prescription\":\"3 × 5\"",
+      with: "\"prescription\":\"10 @ 125 · 8 @ 135 · 6 @ 145\",\"ramp\":[{\"reps\":\"10\",\"offset\":-20},{\"reps\":\"8\",\"offset\":-10},{\"reps\":\"6\",\"offset\":0}]"
+    )
+    let home = try makeHome(with: rampExport)
+    defer { try? FileManager.default.removeItem(at: home) }
+    let server = FitHappensMCPServer.make(home: home)
+
+    let program = try await call("get_program", on: server)
+    #expect(!program.isError)
+    #expect(program.text.contains("\"offset\":-20"))
+    #expect(program.text.contains("10 @ 125 · 8 @ 135 · 6 @ 145"))
+
+    let validRamp = """
+    FH-PROGRAM: v1
+    {"workouts":[{"key":"A","items":[{"key":"bench","name":"Bench","loadKind":"weight",
+      "ramp":[{"reps":"10","offset":-25},{"reps":"8","offset":-10},{"reps":"6","offset":0}]}]}]}
+    """
+    let staged = try await call("propose_program", arguments: ["text": .string(validRamp)], on: server)
+    #expect(!staged.isError)
+    #expect(staged.text.contains("1 other change"))
+
+    let invalidRamp = """
+    FH-PROGRAM: v1
+    {"workouts":[{"key":"A","items":[{"key":"bench","name":"Bench","loadKind":"weight",
+      "ramp":[{"reps":"10","offset":1},{"reps":"6","offset":0}]}]}]}
+    """
+    let rejected = try await call("propose_program", arguments: ["text": .string(invalidRamp)], on: server)
+    #expect(rejected.isError)
+    #expect(rejected.text.contains("Ramp offsets for exercise bench must be finite and at or below 0."))
+  }
+
   @Test func reportsANewerExportThroughTheMCPHarness() async throws {
     let home = try makeHome(with: validExport(version: 2))
     defer { try? FileManager.default.removeItem(at: home) }

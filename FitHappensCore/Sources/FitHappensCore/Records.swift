@@ -68,13 +68,18 @@ public struct WorkoutItem: Identifiable, Equatable, Sendable {
   public var exerciseID: Exercise.ID
   public var position: Int
   public var prescription: String
+  public var ramp: String?
 
-  public init(id: UUID, workoutID: Workout.ID, exerciseID: Exercise.ID, position: Int, prescription: String) {
+  public init(
+    id: UUID, workoutID: Workout.ID, exerciseID: Exercise.ID, position: Int,
+    prescription: String, ramp: String? = nil
+  ) {
     self.id = id
     self.workoutID = workoutID
     self.exerciseID = exerciseID
     self.position = position
     self.prescription = prescription
+    self.ramp = ramp
   }
 }
 

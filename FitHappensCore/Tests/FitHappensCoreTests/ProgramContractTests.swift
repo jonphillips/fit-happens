@@ -95,7 +95,6 @@ struct StagedProgramTests {
 }
 
 struct ProgramContractTests {
-
   @Test func reportsWeightAndDetailChangesWithDefaultResolved() throws {
     let current = CurrentProgram(
       exercises: [CurrentExercise(

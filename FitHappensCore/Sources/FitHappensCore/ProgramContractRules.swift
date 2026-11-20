@@ -34,6 +34,10 @@ public enum ProgramContractRules {
   the app keeps its working weight.
   A change from bodyweight to weight needs a startingWeight; a change from weight to bodyweight omits it.
   Missing exercise keys retire the exercise. Include all workouts and items in order.
+  A weighted item may use ramp instead of prescription. Ramps need at least two steps, non-empty reps,
+  finite offsets at or below 0, and at least one offset of 0. The working weight is the top step; the
+  app displays each step as working weight plus offset. For example: "ramp": [{"reps":"10","offset":-20},
+  {"reps":"8","offset":-10}, {"reps":"6","offset":0}]. Omit prescription with ramp; if included, it is ignored.
   """
 }
 
@@ -65,6 +69,11 @@ public enum ProgramErrorMessage {
         "Bodyweight exercise \(key) must omit newWeight and startingWeight."
       case let .newWeightOnLoadKindChange(key):
         "Exercise \(key) must use startingWeight instead of newWeight when changing load kind."
+      case let .rampTooShort(key): "Exercise \(key) needs at least two ramp steps."
+      case let .emptyRampReps(key): "Every ramp step for exercise \(key) needs reps."
+      case let .invalidRampOffset(key): "Ramp offsets for exercise \(key) must be finite and at or below 0."
+      case let .rampMissingTop(key): "Ramp for exercise \(key) needs a step with offset 0."
+      case let .rampOnBodyweight(key): "Bodyweight exercise \(key) must omit ramp."
       }
     case let error as CurrentProgramQueryError:
       switch error {
