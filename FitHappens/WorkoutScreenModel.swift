@@ -24,22 +24,8 @@ final class WorkoutScreenModel {
   @ObservationIgnored @Shared(.appStorage("fitHappensDeclinedHealthWorkouts"))
   private var declinedWorkoutEndDatesRaw = ""
 
-  var destination: Destination?
-  var dateDraft = Date.now
   private(set) var recentStrengthWorkouts: [HealthWorkout] = []
   private(set) var healthReadFailed = false
-
-  enum Destination: Identifiable {
-    case history
-    case programImport
-
-    var id: String {
-      switch self {
-      case .history: "history"
-      case .programImport: "programImport"
-      }
-    }
-  }
 
   var currentProgram: CurrentProgram? {
     withErrorReporting {
@@ -59,10 +45,6 @@ final class WorkoutScreenModel {
       CompletionSummary(id: $0.id, workoutKey: $0.workoutKey, completedAt: $0.completedAt)
     }
   }
-
-  var history: [Completion] { completionHistory }
-  var latestCompletionID: Completion.ID? { completionHistory.first?.id }
-  var now: Date { date.now }
 
   var healthWorkoutCandidate: HealthWorkout? {
     StrengthWorkoutCandidate.pick(
@@ -188,34 +170,4 @@ final class WorkoutScreenModel {
     }
   }
 
-  func historyButtonTapped() {
-    destination = .history
-  }
-
-  func programButtonTapped() {
-    destination = .programImport
-  }
-
-  func changeDateButtonTapped(for completion: Completion) {
-    dateDraft = completion.completedAt
-  }
-
-  @discardableResult
-  func saveCorrectedDateButtonTapped(for completionID: Completion.ID) -> Bool {
-    let result = withErrorReporting {
-      try database.write { database in
-        try WorkoutHistoryOperations.correctDate(dateDraft, completionID: completionID, in: database)
-      }
-      return true
-    }
-    return result ?? false
-  }
-
-  func undoCompletionButtonTapped(_ completionID: Completion.ID) {
-    withErrorReporting {
-      try database.write { database in
-        try WorkoutHistoryOperations.undo(completionID, in: database)
-      }
-    }
-  }
 }

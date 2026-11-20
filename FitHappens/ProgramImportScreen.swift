@@ -3,7 +3,6 @@ import FitHappensInboxKit
 import SwiftUI
 
 struct ProgramImportScreen: View {
-  @Environment(\.dismiss) private var dismiss
   @Environment(ChatInboxModel.self) private var chatInbox
   @State private var model = ProgramImportModel()
   var exportModel: ChatAccessExportModel
@@ -12,22 +11,17 @@ struct ProgramImportScreen: View {
     NavigationStack(path: $model.path) {
       importForm
         .navigationTitle("Program")
-        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: ProgramImportRoute.self) { _ in
           reviewScreen
-        }
-        .toolbar {
-          ToolbarItem(placement: .confirmationAction) {
-            Button("Done") { dismiss() }
-          }
         }
     }
   }
 
   private var importForm: some View {
     Form {
-      pasteSection
       stagedProgramsSection
+      programSections
+      pasteSection
       instructionsSection
       chatAccessSection
       revisionsSection
@@ -35,17 +29,51 @@ struct ProgramImportScreen: View {
   }
 
   private var stagedProgramsSection: some View {
-    Section("From Chat") {
-      if chatInbox.rows.isEmpty {
-        Text(chatInbox.enabled ? "No staged proposals." : "Turn on Chat Access to receive proposals.")
-          .foregroundStyle(.secondary)
-      } else {
-        ForEach(chatInbox.rows) { row in
-          stagedProgramRow(row, isNewest: chatInbox.rows.first?.id == row.id)
+    Group {
+      if !chatInbox.rows.isEmpty || chatInbox.message != nil {
+        Section("From Chat") {
+          ForEach(chatInbox.rows) { row in
+            stagedProgramRow(row, isNewest: chatInbox.rows.first?.id == row.id)
+          }
+          if let message = chatInbox.message {
+            Text(message).font(.caption).foregroundStyle(.secondary)
+          }
         }
       }
-      if let message = chatInbox.message {
-        Text(message).font(.caption).foregroundStyle(.secondary)
+    }
+  }
+
+  @ViewBuilder
+  private var programSections: some View {
+    if let overview = model.programOverview {
+      ForEach(overview.workouts) { workout in
+        Section {
+          ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, exercise in
+            VStack(alignment: .leading, spacing: 3) {
+              Text("\(index + 1). \(exercise.name)")
+              Text(exercise.prescription).foregroundStyle(.secondary)
+              if exercise.loadKind == .weight, let pounds = exercise.loadPounds {
+                let label = exercise.loadLabel.map { " \($0)" } ?? ""
+                Text("\(pounds.formatted(.number.precision(.fractionLength(0...2)))) lb\(label)")
+                  .font(.subheadline).foregroundStyle(.secondary)
+              } else {
+                Text("Bodyweight").font(.subheadline).foregroundStyle(.secondary)
+              }
+            }
+            .padding(.vertical, 2)
+          }
+        } header: {
+          HStack {
+            Text("Workout \(workout.key)")
+            if workout.key == overview.nextWorkoutKey {
+              Text("Next").font(.caption.weight(.semibold)).foregroundStyle(.tint)
+            }
+          }
+        }
+      }
+    } else {
+      Section("Program") {
+        Text("No program yet.").foregroundStyle(.secondary)
       }
     }
   }
@@ -185,10 +213,9 @@ struct ProgramImportScreen: View {
             guard await chatInbox.applyStagedProgram(url, applying: { model.applyReviewedProgram() }) else {
               return
             }
-            dismiss()
           }
-        } else if model.applyReviewedProgram() {
-          dismiss()
+        } else {
+          _ = model.applyReviewedProgram()
         }
       }
     } else {

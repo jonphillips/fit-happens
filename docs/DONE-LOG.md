@@ -3,6 +3,12 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-20 — Three tabs (`effort/three-tabs`)
+
+- **Result:** Added the Next Workout, Activity, and Program tabs; moved corrections into a shared model; projected the full program; and moved Chat Access export ownership to the app root.
+- **Verification:** scripts/check-drift.sh passed: SwiftLint, Core and helper tests, package resolution, and iOS Simulator build.
+- **Owed:** Tabs and ramps Dispatch 1's device gate, in [device-passes.md](device-passes.md).
+
 ## 2026-11-19 — M3 Dispatch 2: Stage proposals in the review (`m3/s3-stage-proposals`)
 
 - **Result:** Added propose_program validation and staging, plus the app inbox review, apply and discard claim flows, watcher lifecycle, and ready-count badge.

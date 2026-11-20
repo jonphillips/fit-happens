@@ -3,11 +3,13 @@ import SwiftUI
 
 struct ActivityScreen: View {
   @State private var model = ActivityScreenModel()
+  @State private var path: [ActivityDestination] = []
+  @Environment(CompletionCorrectionsModel.self) private var correctionsModel
   var isActive: Bool
   @Environment(\.calendar) private var calendar
 
   var body: some View {
-    NavigationStack {
+    NavigationStack(path: $path) {
       Group {
         if model.hasLoaded {
           activity
@@ -17,6 +19,14 @@ struct ActivityScreen: View {
         }
       }
       .navigationTitle("Activity")
+      .navigationDestination(for: ActivityDestination.self) { destination in
+        switch destination {
+        case .history:
+          CompletionHistoryScreen(model: correctionsModel, path: $path)
+        case let .correctDate(completionID):
+          CompletionDateCorrectionDestination(model: correctionsModel, completionID: completionID)
+        }
+      }
       .task(id: isActive) {
         if isActive { await model.screenAppeared(calendar: calendar) }
       }
@@ -28,6 +38,11 @@ struct ActivityScreen: View {
       calendarSection
       bodyWeightSection
       progressionSection
+      Section {
+        NavigationLink(value: ActivityDestination.history) {
+          Label("Fix a workout", systemImage: "calendar.badge.exclamationmark")
+        }
+      }
     }
   }
 
