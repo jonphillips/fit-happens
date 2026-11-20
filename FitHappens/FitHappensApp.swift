@@ -1,3 +1,4 @@
+import CloudSyncKit
 import Dependencies
 import FitHappensCore
 import FitHappensInboxKit
@@ -9,10 +10,13 @@ struct FitHappensApp: App {
   @State private var chatInbox = ChatInboxModel()
   @State private var chatAccessModel = ChatAccessExportModel()
   @State private var correctionsModel = CompletionCorrectionsModel()
-  @Environment(\.scenePhase) private var scenePhase
+  @State private var iCloudSyncModel = ICloudSyncModel()
+  @State private var automaticBackupModel = AutomaticBackupModel(
+    backup: FitHappensCloudSync.databaseBackupConfiguration,
+    configuration: FitHappensCloudSync.automaticBackupConfiguration
+  )
 
   init() {
-    UserDefaults.standard.register(defaults: [FitHappensCloudSync.configuration.enabledDefaultsKey: true])
     do {
       try prepareDependencies {
         $0.healthClient = HealthKitClient.live
@@ -27,34 +31,66 @@ struct FitHappensApp: App {
 
   var body: some Scene {
     WindowGroup {
-      TabView(selection: $selectedTab) {
-        Tab("Next Workout", systemImage: "dumbbell.fill", value: AppTab.workout) {
-          WorkoutScreen(selectedTab: $selectedTab)
-        }
-        Tab("Activity", systemImage: "calendar", value: AppTab.activity) {
-          ActivityScreen(isActive: selectedTab == .activity)
-        }
-        Tab("Program", systemImage: "doc.text", value: AppTab.program) {
-          ProgramImportScreen(exportModel: chatAccessModel)
-        }
-        .badge(chatInbox.readyCount)
-      }
-      .environment(chatInbox)
-      .environment(correctionsModel)
-      .task { await chatInbox.prepare() }
-      .onChange(of: scenePhase) { _, phase in
-        guard phase == .active else {
-          return
-        }
-        Task { await chatInbox.prepare() }
-      }
-      .onChange(of: scenePhase) { _, phase in
-        guard phase == .background else {
-          return
-        }
-        chatAccessModel.appDidEnterBackground()
-      }
+      FitHappensScene(
+        selectedTab: $selectedTab,
+        chatInbox: chatInbox,
+        chatAccessModel: chatAccessModel,
+        correctionsModel: correctionsModel,
+        iCloudSyncModel: iCloudSyncModel,
+        automaticBackupModel: automaticBackupModel
+      )
     }
+  }
+}
+
+private struct FitHappensScene: View {
+  @Binding var selectedTab: AppTab
+  var chatInbox: ChatInboxModel
+  var chatAccessModel: ChatAccessExportModel
+  var correctionsModel: CompletionCorrectionsModel
+  var iCloudSyncModel: ICloudSyncModel
+  var automaticBackupModel: AutomaticBackupModel
+  @Environment(\.scenePhase) private var scenePhase
+
+  var body: some View {
+    TabView(selection: $selectedTab) {
+      Tab("Next Workout", systemImage: "dumbbell.fill", value: AppTab.workout) {
+        WorkoutScreen(selectedTab: $selectedTab)
+      }
+      Tab("Activity", systemImage: "calendar", value: AppTab.activity) {
+        ActivityScreen(isActive: selectedTab == .activity)
+      }
+      Tab("Program", systemImage: "doc.text", value: AppTab.program) {
+        ProgramImportScreen(
+          exportModel: chatAccessModel,
+          iCloudSyncModel: iCloudSyncModel,
+          automaticBackupModel: automaticBackupModel
+        )
+      }
+      .badge(chatInbox.readyCount)
+    }
+    .environment(chatInbox)
+    .environment(correctionsModel)
+    .task { await chatInbox.prepare() }
+    .task { await automaticBackupModel.runIfDue() }
+    .onChange(of: scenePhase) { _, phase in
+      guard phase == .active else {
+        return
+      }
+      Task { await sceneBecameActive() }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      guard phase == .background else {
+        return
+      }
+      chatAccessModel.appDidEnterBackground()
+    }
+  }
+
+  private func sceneBecameActive() async {
+    await chatInbox.prepare()
+    await iCloudSyncModel.startIfEnabled()
+    await automaticBackupModel.runIfDue()
   }
 }
 
