@@ -137,6 +137,18 @@ struct RampContractTests {
       "prescription":"10 @ 125 · 8 @ 135 · 6 @ 145",
       "ramp":[{"reps":"10","offset":-20},{"reps":"8","offset":-10},{"reps":"6","offset":0}]}]}]}
     """
+    let current = CurrentProgram(
+      exercises: [CurrentExercise(
+        key: "bench", name: "Bench", loadKind: .weight, load: .weight(pounds: 145), increment: 5
+      )],
+      workouts: [CurrentWorkout(
+        key: "A", exerciseKeys: ["bench"],
+        prescriptions: ["bench": "10 @ 125 · 8 @ 135 · 6 @ 145"], ramps: ["bench": ramp]
+      )]
+    )
+    let contract = try ProgramContractDecoder.decode(proposal).contract
+    let changes = try ProgramChanges.make(current: current, proposal: contract)
+    #expect(changes.workoutChanges.isEmpty)
     #expect(StagedProgram.check(text: proposal, export: export) == .valid(.init(changeSummary: "No changes")))
   }
 }
