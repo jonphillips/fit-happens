@@ -16,7 +16,14 @@ Seeded 2026-11-15.
 
 ## Small follow-ups
 
-None open. The review gap found in #6 is M3 S1.
+- **The review flashes "Review unavailable" after Apply** (from the review of #21). On success,
+  `ProgramImportModel.applyReviewedProgram` sets `self.review = nil` in the same update that empties
+  `path`. During the pop animation, the outgoing review screen redraws with no review and shows its
+  placeholder. The fix is deleting that line, since a popped review is reachable only through a new
+  review, which replaces it. `scripts/check-drift.sh` passed with the line deleted. It's cosmetic. It
+  can ride along with Tabs and ramps Dispatch 2, which touches the Program tab.
+
+The review gap found in #6 is M3 S1.
 
 ## Candidates (not committed)
 

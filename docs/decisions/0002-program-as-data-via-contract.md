@@ -82,8 +82,11 @@ and notes. Rules:
   progression; a chat proposes and Jon approves.
 - *Amended 2026-11-20:* **an item may carry `ramp`** instead of a prescription (D1):
   `"ramp": [{"reps": "10", "offset": -20}, {"reps": "8", "offset": -10}, {"reps": "6", "offset": 0}]`.
-  With a ramp, `prescription` may be left out. If it's there, it's ignored, and the review says so,
-  as with an ignored starting weight. A ramp needs at least two steps, non-empty reps, finite
+  With a ramp, `prescription` may be left out. If it's there, it's ignored without comment.
+  *(Revised 2026-11-20, from the review of #23: `get_program` gives a ramped item its written-out
+  text as `prescription`, so a chat that echoes the program back sends that text with every
+  proposal. Flagging each one would fill the review with notes about proposals that change nothing.
+  The ramp itself still shows in the review whenever it changes.)* A ramp needs at least two steps, non-empty reps, finite
   offsets, at least one offset of 0, and none above 0. It's an error on a bodyweight item. Like
   `newWeight`, the field is additive, so the marker stays `v1`. A stored contract without ramps
   still means what it meant. In the review, a ramp that's added, removed, or changed is a prescription
