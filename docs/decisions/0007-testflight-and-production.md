@@ -51,6 +51,18 @@ sets that ID, `CLOUDKIT_CONTAINER=iCloud.com.jonphillips.fithappens`, the house 
 records files. `project.yml` already sets `DEVELOPMENT_TEAM`, and `Info.plist` gains
 `ITSAppUsesNonExemptEncryption = NO`, as Galavant's do.
 
+*Amended 2026-11-20, Jon's call:* **the App ID becomes `com.jonphillips.fithappens`**, the ID M1
+chose and the same pattern as Yes Chef's `com.jonphillips.yeschef`. The capitalized ID was never
+chosen. XcodeGen built it from `bundleIdPrefix` and the target name, and it rebuilds it that way on
+every generate, so `project.yml` sets `PRODUCT_BUNDLE_IDENTIFIER` explicitly. This is the cheapest
+time to change it: there's no App Store Connect record and no Production schema yet. The "empty
+store" cost above is bounded:
+- The CloudKit container doesn't change. A development build with the new ID syncs the program and
+  history down from the same Development environment.
+- The old app is a separate install, and it stays untouched until the new one shows everything.
+  If sync doesn't bring the data across, Jon keeps using the old app. The fallback is reverting one
+  line, or moving after backup and restore exist (D3).
+
 ### D2 — An in-app sync switch, and the push entitlement
 
 - **iCloud Sync** is a switch, off by default, through `CloudSync.setManuallyEnabled` and
