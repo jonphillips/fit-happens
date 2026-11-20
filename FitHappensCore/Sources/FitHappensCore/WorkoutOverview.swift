@@ -27,30 +27,48 @@ public struct WorkoutOverview: Equatable, Sendable {
   public static func make(
     program: CurrentProgram, latestCompletion: CompletionSummary?
   ) -> WorkoutOverview? {
-    guard let workoutKey = WorkoutRotation.nextWorkoutKey(
-      workoutKeys: program.workouts.map(\.key), latestCompletion: latestCompletion
-    ), let workout = program.workouts.first(where: { $0.key == workoutKey }) else {
+    guard let overview = ProgramOverview.make(program: program, latestCompletion: latestCompletion),
+          let workout = overview.workouts.first(where: { $0.key == overview.nextWorkoutKey }) else {
       return nil
     }
+    return WorkoutOverview(
+      workoutKey: workout.key, exercises: workout.exercises, lastCompletedAt: latestCompletion?.completedAt
+    )
+  }
+}
+
+public struct ProgramOverview: Equatable, Sendable {
+  public struct Workout: Equatable, Sendable, Identifiable {
+    public var key: String
+    public var exercises: [WorkoutOverviewExercise]
+    public var id: String { key }
+  }
+
+  public var workouts: [Workout]
+  public var nextWorkoutKey: String
+
+  public static func make(program: CurrentProgram, latestCompletion: CompletionSummary?) -> Self? {
+    guard let nextWorkoutKey = WorkoutRotation.nextWorkoutKey(
+      workoutKeys: program.workouts.map(\.key), latestCompletion: latestCompletion
+    ) else { return nil }
 
     let exercisesByKey = Dictionary(uniqueKeysWithValues: program.exercises.map { ($0.key, $0) })
-    let exercises = workout.exerciseKeys.compactMap { key -> WorkoutOverviewExercise? in
-      guard let exercise = exercisesByKey[key], let prescription = workout.prescriptions[key] else {
-        return nil
-      }
-      return WorkoutOverviewExercise(
-        key: exercise.key,
-        name: exercise.name,
-        prescription: prescription,
-        loadKind: exercise.loadKind,
-        loadPounds: exercise.load?.pounds,
-        increment: exercise.increment,
-        loadLabel: exercise.loadLabel
+    let workouts = program.workouts.map { workout in
+      Workout(
+        key: workout.key,
+        exercises: workout.exerciseKeys.compactMap { key in
+          guard let exercise = exercisesByKey[key], let prescription = workout.prescriptions[key] else {
+            return nil
+          }
+          return WorkoutOverviewExercise(
+            key: exercise.key, name: exercise.name, prescription: prescription,
+            loadKind: exercise.loadKind, loadPounds: exercise.load?.pounds,
+            increment: exercise.increment, loadLabel: exercise.loadLabel
+          )
+        }
       )
     }
-    return WorkoutOverview(
-      workoutKey: workout.key, exercises: exercises, lastCompletedAt: latestCompletion?.completedAt
-    )
+    return Self(workouts: workouts, nextWorkoutKey: nextWorkoutKey)
   }
 }
 

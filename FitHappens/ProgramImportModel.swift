@@ -43,6 +43,9 @@ final class ProgramImportModel {
   @ObservationIgnored @FetchAll(Workout.all) private var workouts
   @ObservationIgnored @FetchAll(WorkoutItem.all) private var workoutItems
   @ObservationIgnored @FetchAll(
+    Completion.order { ($0.completedAt.desc(), $0.id.desc()) }.limit(1)
+  ) private var completions
+  @ObservationIgnored @FetchAll(
     ProgramRevision.order { ($0.acceptedAt.desc(), $0.id.desc()) }
   ) private var revisions
 
@@ -54,6 +57,18 @@ final class ProgramImportModel {
   var stagedURL: URL?
 
   var acceptedRevisions: [ProgramRevision] { revisions }
+  var programOverview: ProgramOverview? {
+    let program: CurrentProgram? = withErrorReporting {
+      try CurrentProgramQuery.make(exerciseRows: exercises, workoutRows: workouts, itemRows: workoutItems)
+    }
+    guard let program else {
+      return nil
+    }
+    let latest = completions.first.map {
+      CompletionSummary(id: $0.id, workoutKey: $0.workoutKey, completedAt: $0.completedAt)
+    }
+    return ProgramOverview.make(program: program, latestCompletion: latest)
+  }
   func reviewPastedProgram() {
     stagedURL = nil
     _ = makeReview(for: programText, isStoredRevision: false)

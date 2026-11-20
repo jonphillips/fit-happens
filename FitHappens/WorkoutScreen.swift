@@ -1,27 +1,19 @@
 import FitHappensCore
-import FitHappensInboxKit
 import SwiftUI
 
 struct WorkoutScreen: View {
   @State private var model = WorkoutScreenModel()
-  @State private var chatAccessModel = ChatAccessExportModel()
+  @State private var showingLastDone = false
+  @Environment(CompletionCorrectionsModel.self) private var correctionsModel
+  @Binding var selectedTab: AppTab
   @Environment(\.scenePhase) private var scenePhase
-  @Environment(ChatInboxModel.self) private var chatInbox
 
   var body: some View {
     NavigationStack {
       mainContent
         .navigationTitle("Next Workout")
-        .toolbar {
-          ToolbarItem(placement: .topBarTrailing) {
-            programButton
-          }
-          ToolbarItem(placement: .topBarTrailing) {
-            Button("History", systemImage: "clock") { model.historyButtonTapped() }
-          }
-        }
-        .sheet(item: $model.destination) { destination in
-          presentedScreen(for: destination)
+        .sheet(isPresented: $showingLastDone) {
+          LatestCompletionCorrectionScreen(model: correctionsModel)
         }
         .task(id: scenePhase) {
           guard scenePhase == .active else {
@@ -29,29 +21,6 @@ struct WorkoutScreen: View {
           }
           await model.screenAppeared()
         }
-        .onChange(of: scenePhase) { _, phase in
-          guard phase == .background else {
-            return
-          }
-          chatAccessModel.appDidEnterBackground()
-        }
-    }
-  }
-
-  private var programButton: some View {
-    Button {
-      model.programButtonTapped()
-    } label: {
-      HStack(spacing: 6) {
-        Label("Program", systemImage: "doc.text")
-        if chatInbox.readyCount > 0 {
-          Text(chatInbox.readyCount.formatted())
-            .font(.caption2.weight(.semibold))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(.quaternary, in: Capsule())
-        }
-      }
     }
   }
 
@@ -66,23 +35,15 @@ struct WorkoutScreen: View {
           systemImage: "dumbbell",
           description: Text("Import a workout program to get started.")
         )
-        Button("Import Program", systemImage: "doc.text") { model.programButtonTapped() }
+        Button("Import Program", systemImage: "doc.text") { selectedTab = .program }
           .buttonStyle(.borderedProminent)
       }
     }
   }
 
-  @ViewBuilder
-  private func presentedScreen(for destination: WorkoutScreenModel.Destination) -> some View {
-    switch destination {
-    case .history: HistoryScreen(model: model)
-    case .programImport: ProgramImportScreen(exportModel: chatAccessModel)
-    }
-  }
-
   private func workout(_ overview: WorkoutOverview) -> some View {
     List {
-      WorkoutSummaryRow(overview: overview)
+      WorkoutSummaryRow(overview: overview) { showingLastDone = true }
 
       if let candidate = model.healthWorkoutCandidate {
         HealthWorkoutOffer(
@@ -149,6 +110,7 @@ private struct HealthWorkoutOffer: View {
 
 private struct WorkoutSummaryRow: View {
   var overview: WorkoutOverview
+  var lastDoneTapped: () -> Void
 
   var body: some View {
     Section {
@@ -156,8 +118,11 @@ private struct WorkoutSummaryRow: View {
         Text("Workout \(overview.workoutKey)")
           .font(.largeTitle.bold())
         if let lastCompletedAt = overview.lastCompletedAt {
-          Text("Last done \(lastCompletedAt, format: .dateTime.month().day().year())")
-            .foregroundStyle(.secondary)
+          Button(action: lastDoneTapped) {
+            Text("Last done \(lastCompletedAt, format: .dateTime.month().day().year())")
+              .foregroundStyle(.secondary)
+          }
+          .buttonStyle(.plain)
         } else {
           Text("No workouts completed yet")
             .foregroundStyle(.secondary)
@@ -239,113 +204,6 @@ private struct WeightControl: View {
     } else {
       Text("Weight not set")
         .foregroundStyle(.secondary)
-    }
-  }
-}
-
-private struct HistoryScreen: View {
-  var model: WorkoutScreenModel
-  @State private var path: [Completion.ID] = []
-
-  var body: some View {
-    NavigationStack(path: $path) {
-      HistoryList(model: model, openDateCorrection: { path.append($0) })
-        .navigationTitle("History")
-        .navigationDestination(for: Completion.ID.self) { completionID in
-          DateCorrectionScreen(model: model, completionID: completionID)
-        }
-        .toolbar {
-          ToolbarItem(placement: .confirmationAction) {
-            Button("Done") { model.destination = nil }
-          }
-        }
-    }
-  }
-}
-
-private struct HistoryList: View {
-  var model: WorkoutScreenModel
-  @State private var completionToUndo: Completion? = nil
-  var openDateCorrection: (Completion.ID) -> Void = { _ in }
-
-  var body: some View {
-    List {
-      if model.history.isEmpty {
-        ContentUnavailableView("No workouts yet", systemImage: "clock")
-      } else {
-        let latestCompletionID = model.latestCompletionID
-        ForEach(model.history) { completion in
-          HistoryRow(
-            completion: completion,
-            isLatest: completion.id == latestCompletionID,
-            changeDate: {
-              model.changeDateButtonTapped(for: completion)
-              openDateCorrection(completion.id)
-            },
-            undo: { completionToUndo = completion }
-          )
-        }
-      }
-    }
-    .confirmationDialog("Undo this workout?", item: $completionToUndo) { completion in
-      Button("Undo Workout \(completion.workoutKey)", role: .destructive) {
-        model.undoCompletionButtonTapped(completion.id)
-      }
-    } message: { _ in
-      Text("This removes the workout and its saved exercise snapshot.")
-    }
-  }
-}
-
-private struct HistoryRow: View {
-  var completion: Completion
-  var isLatest: Bool
-  var changeDate: () -> Void
-  var undo: () -> Void
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack {
-        Text("Workout \(completion.workoutKey)")
-          .font(.headline)
-        Spacer()
-        Text(completion.completedAt, format: .dateTime.month().day().year())
-          .foregroundStyle(.secondary)
-      }
-      Button("Change date", action: changeDate)
-        .font(.subheadline)
-        .buttonStyle(.borderless)
-      if isLatest {
-        Button("Undo this completion", role: .destructive, action: undo)
-          .font(.subheadline)
-          .buttonStyle(.borderless)
-      }
-    }
-    .padding(.vertical, 4)
-  }
-}
-
-private struct DateCorrectionScreen: View {
-  @Bindable var model: WorkoutScreenModel
-  var completionID: Completion.ID
-  @Environment(\.dismiss) private var dismiss
-
-  var body: some View {
-    Form {
-      DatePicker("Completed", selection: $model.dateDraft, in: ...model.now, displayedComponents: .date)
-    }
-    .navigationTitle("Change Date")
-    .toolbar {
-      ToolbarItem(placement: .cancellationAction) {
-        Button("Cancel") { dismiss() }
-      }
-      ToolbarItem(placement: .confirmationAction) {
-        Button("Save") {
-          if model.saveCorrectedDateButtonTapped(for: completionID) {
-            dismiss()
-          }
-        }
-      }
     }
   }
 }
