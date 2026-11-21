@@ -64,6 +64,7 @@ targets:
             NSUbiquitousContainerName: Fit Happens
             NSUbiquitousContainerSupportedFolderLevels: Any
         NSHealthShareUsageDescription: Fit Happens reads your workouts, walking distance, and body weight to show recent activity and link Watch workouts to your program.
+        NSHealthUpdateUsageDescription: Fit Happens doesn't write to Health. It only reads your workouts, walking distance, and body weight.
         UTExportedTypeDeclarations:
           - UTTypeConformsTo:
               - public.data
