@@ -3,6 +3,16 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-21 — TestFlight and Production: cutover steps 9–10; the effort is done (`plan/testflight-renewal`)
+
+- **Result:** Jon installed build 32 from TestFlight on the iPad and turned on sync, and the iPad
+  received the program and history from Production. From now on, Jon's devices run only TestFlight
+  builds. That finishes the cutover, and the brief moves to the archive. The mini's own setup stays
+  in jon-platform `always-on-mac.md` Phase 2. The 90-day expiry is dispatched as
+  [TestFlight renewal on the mini](efforts/testflight-renewal.md) (jon-platform ADR-0010, Jon's
+  call: release on its own 14 days ahead, and report by iMessage).
+- **Verification:** Jon's check on the iPad.
+
 ## 2026-11-21 — Device pass: TestFlight and Production Dispatch 1; cutover steps 1–8 (`plan/testflight-script-fixes`)
 
 - **Result:** Jon passed Dispatch 1's gate on a development build: Back Up Now and a restore on
