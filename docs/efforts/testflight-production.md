@@ -96,7 +96,8 @@ gate.
 
 ## Then — Jon's cutover (ADR-0007 D5)
 
-This isn't a dispatch. Jon does it with the architect, after Dispatch 1's device gate passes. When a
+This isn't a dispatch. Jon does it with the architect, after Dispatch 1's device gate passes. *2026-11-21:
+the gate passed, and steps 1–4 ran from Jon's MBP, which had the release setup (`DONE-LOG.md`).* When a
 step is done, the architect records it in `DONE-LOG.md`.
 
 1. **One-time, if not done yet.**
@@ -104,12 +105,12 @@ step is done, the architect records it in `DONE-LOG.md`.
    - A Remote Control server for this repo on the mini (`rc-server install ~/code/fit-happens`).
    - The App Store Connect app record for `com.jonphillips.fithappens`, with Jon as an internal
      tester.
-2. **`testflight --no-upload`** from clean `main` on the mini. This proves signing, the entitlements
-   (`aps-environment`, the container, no app group), and the schema gate's Development export.
-3. **Check what Development holds** in the CloudKit console against the six tables. Remove anything
+2. **Check what Development holds** in the CloudKit console against the six tables. Remove anything
    left over from an experiment.
-4. **Deploy the schema to Production.** Then rerun `testflight --dry-run`, which should pass schema
-   parity.
+3. **Deploy the schema to Production.**
+4. **`testflight --no-upload`** from clean `main`. This proves signing and the entitlements
+   (`aps-environment`, the container, no app group). It comes after the deploy because the script
+   runs the schema gate before it archives. *Amended 2026-11-21: the order was reversed.*
 5. **Back up on the phone** with the development build. Check that the file restores, and keep it in
    two places off the phone.
 6. **`testflight`**, then install the build from TestFlight over the development build.
