@@ -97,7 +97,8 @@ gate.
 ## Then — Jon's cutover (ADR-0007 D5)
 
 This isn't a dispatch. Jon does it with the architect, after Dispatch 1's device gate passes. *2026-11-21:
-the gate passed, and steps 1–4 ran from Jon's MBP, which had the release setup (`DONE-LOG.md`).* When a
+the gate passed, and steps 1–8 ran from Jon's MBP, which had the release setup (`DONE-LOG.md`).
+Steps 9 and 10 remain, and the mini's setup in step 1.* When a
 step is done, the architect records it in `DONE-LOG.md`.
 
 1. **One-time, if not done yet.**
