@@ -3,6 +3,31 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-21 — Device pass: TestFlight and Production Dispatch 1; cutover steps 1–8 (`plan/testflight-script-fixes`)
+
+- **Result:** Jon passed Dispatch 1's gate on a development build: Back Up Now and a restore on
+  the same phone, the automatic backup, and the sync switch. The cutover then ran from Jon's MBP,
+  which already had the `asc` key and the `cktool` token, rather than the mini:
+  - **Step 1:** the App Store Connect app record exists. The mini's `testflight` setup and its
+    Remote Control server are deferred; they aren't needed for the cutover.
+  - **Step 2:** Development held exactly the six tables and the system `Users` type, with all 72
+    expected fields. `exercises.increment` was missing until a revision set one exercise's
+    increment to 5, because every exercise had synced it as null.
+  - **Step 3:** Jon deployed the schema to Production.
+  - **Step 4:** `testflight --no-upload` exported and verified the app with Production
+    entitlements. The brief had it before the deploy, but the script runs the schema gate before
+    it archives, so the brief now orders it after.
+  - **Steps 5–8:** Jon backed up the development build, and `testflight` uploaded 1.0.0 (32),
+    which processed as valid and is tagged `testflight/1.0.0-32`. He installed it over the
+    development build, restored the backup, and turned on iCloud Sync. The records are in
+    CloudKit Production.
+  - Two app fixes landed for upload: all interface orientations (#30) and
+    `NSHealthUpdateUsageDescription` (#31). Two `testflight` defects are dispatched as
+    [testflight-script-fixes](efforts/testflight-script-fixes.md).
+- **Verification:** Jon's device check; the architect's Development schema exports against
+  `cloudkit-expected-fields.txt`; the `--no-upload` run's bundle check; App Store Connect's
+  processing of build 32; Jon's check of Production in the CloudKit console.
+
 ## 2026-11-20 — TestFlight and Production Dispatch 2: build fixture path (`effort/build-sh-fixture-path`)
 
 - **Result:** Recorded the companion app slice after S1 merged from jon-platform branch effort/build-fixture-path in PR #156. The effort remains live for Jon’s cutover.
