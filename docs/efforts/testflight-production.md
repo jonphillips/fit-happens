@@ -1,6 +1,6 @@
 # Effort — TestFlight and Production
 
-Status: Ready
+Status: Blocked on Dispatch 1's device gate, then Jon's cutover, which isn't a dispatch
 Summary: Ship Fit Happens through TestFlight from the mini, so a merged dispatch reaches Jon's iPhone wherever he is. The app gets a sync switch, the push entitlement, and CloudSyncKit backup and restore, and then moves to CloudKit Production (ADR-0007).
 
 ## Why
@@ -91,6 +91,8 @@ until the cutover is recorded.
 
 **Done when:** S1's PR is merged with its three runs listed, and S2 is merged. There's no device
 gate.
+
+*Done 2026-11-21: jon-platform #156 and #29.*
 
 ## Then — Jon's cutover (ADR-0007 D5)
 
