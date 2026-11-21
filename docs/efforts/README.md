@@ -5,4 +5,4 @@ Off-arc briefs (defects, spin-offs), in queue order. Finished, parked, and retir
 
 ## Live
 
-- [TestFlight and Production](testflight-production.md) — after M3: sync switch, backup and restore, then the move to CloudKit Production (ADR-0007). Dispatch 1 is done; Dispatch 2 fixes a jon-platform test fixture; then Jon's cutover.
+- [TestFlight and Production](testflight-production.md) — after M3: sync switch, backup and restore, then the move to CloudKit Production (ADR-0007). Dispatches 1 and 2 are done; next is Jon's cutover, after Dispatch 1's device gate.
