@@ -3,6 +3,11 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-20 — TestFlight and Production Dispatch 2: build fixture path (`effort/build-sh-fixture-path`)
+
+- **Result:** Recorded the companion app slice after S1 merged from jon-platform branch effort/build-fixture-path in PR #156. The effort remains live for Jon’s cutover.
+- **Verification:** jon-platform PR #156 is merged; its description lists all three fixture runs, each printing build checks passed.
+
 ## 2026-11-20 — TestFlight and Production Dispatch 1: App work (`effort/testflight-production-s2`; jon-platform #155 `effort/testflight-app-group-optional`)
 
 - **Result:** Added the TestFlight release configuration and schema field contract, disabled sync by default with status reporting, and wired CloudSyncKit backup, restore, undo, and foreground automatic backup in the Program tab.
