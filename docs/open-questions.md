@@ -16,7 +16,10 @@ Seeded 2026-11-15.
 
 ## Small follow-ups
 
-None open. The review gap found in #6 is M3 S1.
+- **`testflight`'s regenerate error prints a literal `\n`.** `regenerate_project` (jon-platform
+  #163) passes `"…project.yml:\n$changed"` to `die`, which prints with `%s`, so the changed files
+  follow a literal `\n` instead of starting on new lines. Use `$'\n'`. A one-line ride-along for the
+  next jon-platform PR that touches `scripts/testflight`.
 
 ## Candidates (not committed)
 
