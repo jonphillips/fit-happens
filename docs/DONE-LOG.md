@@ -3,10 +3,15 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
-## 2026-11-21 — TestFlight preflight fixes (`effort/testflight-script-fixes`)
+## 2026-11-21 — TestFlight preflight fixes (`effort/testflight-script-fixes`; jon-platform #163 `effort/testflight-empty-upload-slots`)
 
-- **Result:** Completed Dispatch 1 S2 after jon-platform PR #163 (effort/testflight-empty-upload-slots) merged; this PR records S2 on effort/testflight-script-fixes.
-- **Verification:** Records-only change; check-handoff --strict passed through closeout.
+- **Result:** `testflight`'s preflight now deletes this version and build's empty App Store Connect
+  upload slots (`AWAITING_UPLOAD`) before it compares build numbers, and a dry run lists them
+  without deleting. With `XCODEGEN=1`, it also regenerates the project and stops if that changes a
+  tracked file. This PR records S2 and archives the brief.
+- **Verification:** jon-platform #163 lists `scripts/test-testflight` and `bash -n scripts/testflight`
+  passing; the architect reran both on jon-platform `main` (10f0420), under `/bin/bash` and Homebrew
+  bash. `check-handoff --strict` passes. Jon's next Fit Happens release is the live check.
 
 ## 2026-11-21 — TestFlight and Production: cutover steps 9–10; the effort is done (`plan/testflight-renewal`)
 
