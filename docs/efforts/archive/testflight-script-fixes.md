@@ -6,7 +6,7 @@ Summary: Two jon-platform `scripts/testflight` defects that Fit Happens' first r
 ## Why
 
 Both showed up on 2026-11-21, during Fit Happens' first `testflight` run, from Jon's MBP
-([testflight-production](archive/testflight-production.md) cutover).
+([testflight-production](testflight-production.md) cutover).
 
 - **Empty upload slots.** `export_archive … export` (method `app-store-connect`) registers a build
   upload in App Store Connect, even though nothing is uploaded. It's left in state

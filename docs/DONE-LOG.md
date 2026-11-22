@@ -3,6 +3,11 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-21 — TestFlight preflight fixes (`effort/testflight-script-fixes`)
+
+- **Result:** Completed Dispatch 1 S2 after jon-platform PR #163 (effort/testflight-empty-upload-slots) merged; this PR records S2 on effort/testflight-script-fixes.
+- **Verification:** Records-only change; check-handoff --strict passed through closeout.
+
 ## 2026-11-21 — TestFlight and Production: cutover steps 9–10; the effort is done (`plan/testflight-renewal`)
 
 - **Result:** Jon installed build 32 from TestFlight on the iPad and turned on sync, and the iPad
@@ -33,7 +38,7 @@ History, newest first. The PR that completes a dispatch adds its entry naming it
     CloudKit Production.
   - Two app fixes landed for upload: all interface orientations (#30) and
     `NSHealthUpdateUsageDescription` (#31). Two `testflight` defects are dispatched as
-    [testflight-script-fixes](efforts/testflight-script-fixes.md).
+    [testflight-script-fixes](efforts/archive/testflight-script-fixes.md).
 - **Verification:** Jon's device check; the architect's Development schema exports against
   `cloudkit-expected-fields.txt`; the `--no-upload` run's bundle check; App Store Connect's
   processing of build 32; Jon's check of Production in the CloudKit console.
