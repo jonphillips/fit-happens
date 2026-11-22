@@ -1,6 +1,6 @@
-# Next Up — TestFlight renewal on the mini
+# Next Up — Ask for Health access on every device
 
-**Slices:** effort `testflight-renewal`
-**Briefs:** [docs/efforts/testflight-renewal.md](efforts/testflight-renewal.md)
+**Slices:** effort `health-access`
+**Briefs:** [docs/efforts/health-access.md](efforts/health-access.md)
 **Done when:** per the brief
 **Owed:** see [device-passes.md](device-passes.md)

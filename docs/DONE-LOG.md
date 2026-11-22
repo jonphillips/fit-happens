@@ -3,6 +3,12 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-22 — TestFlight renewal on the mini — records closeout (`effort/testflight-renew-records`)
+
+- **Result:** Recorded the companion app slice after jon-platform PR #165 merged at bd69a05: S1 from branch effort/testflight-renew. This S2 records the shared script; the mini installation and device gate remain owed to Jon.
+- **Verification:** jon-platform PR #165 at head 58d02b0 lists both shell test runs, both syntax checks, scripts/check-index, git diff --check, and a real App Store Connect dry run as passed; it reports no hosted CI. `check-handoff --strict` passed during closeout.
+- **Owed:** testflight-renewal's device gate, in [device-passes.md](device-passes.md).
+
 ## 2026-11-21 — TestFlight preflight fixes (`effort/testflight-script-fixes`; jon-platform #163 `effort/testflight-empty-upload-slots`)
 
 - **Result:** `testflight`'s preflight now deletes this version and build's empty App Store Connect
@@ -19,7 +25,7 @@ History, newest first. The PR that completes a dispatch adds its entry naming it
   received the program and history from Production. From now on, Jon's devices run only TestFlight
   builds. That finishes the cutover, and the brief moves to the archive. The mini's own setup stays
   in jon-platform `always-on-mac.md` Phase 2. The 90-day expiry is dispatched as
-  [TestFlight renewal on the mini](efforts/testflight-renewal.md) (jon-platform ADR-0010, Jon's
+  [TestFlight renewal on the mini](efforts/archive/testflight-renewal.md) (jon-platform ADR-0010, Jon's
   call: release on its own 14 days ahead, and report by iMessage).
 - **Verification:** Jon's check on the iPad.
 
