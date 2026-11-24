@@ -3,6 +3,12 @@
 History, newest first. The PR that completes a dispatch adds its entry naming its branch
 (jon-platform ADR-0005 D5). No dispatch reads this file.
 
+## 2026-11-24 — Ask for Health access on every device (`effort/health-access`)
+
+- **Result:** Health access is checked on each activation from Next Workout and Activity. In-flight requests survive scene changes and are shared safely. Both screens can retry when HealthKit still needs an answer, show request or read failures, and explain where to check when access is ready but data is empty.
+- **Verification:** scripts/check-drift.sh passed strict SwiftLint, 78 Core tests, 9 FitHappensMCP tests, 1 FitHappensInboxKit test, package resolution, the pinned iOS Simulator build, and the handoff check.
+- **Owed:** health-access's device gate, in [device-passes.md](device-passes.md).
+
 ## 2026-11-22 — TestFlight renewal on the mini — records closeout (`effort/testflight-renew-records`)
 
 - **Result:** Recorded the companion app slice after jon-platform PR #165 merged at bd69a05: S1 from branch effort/testflight-renew. This S2 records the shared script; the mini installation and device gate remain owed to Jon.

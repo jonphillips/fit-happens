@@ -37,15 +37,79 @@ public struct HealthBodyMass: Equatable, Sendable {
   }
 }
 
+public enum HealthReadAccess: Equatable, Sendable {
+  case ready
+  case needsRequest
+  case failed(String)
+}
+
+public enum HealthAuthorizationRequestStatus: Equatable, Sendable {
+  case shouldRequest
+  case unnecessary
+  case unknown
+}
+
+public actor HealthAuthorizationCoordinator {
+  private let requestStatus: @Sendable () async throws -> HealthAuthorizationRequestStatus
+  private let requestAuthorization: @Sendable () async throws -> Void
+  private var inFlight: Task<HealthReadAccess, Error>?
+
+  public init(
+    requestStatus: @escaping @Sendable () async throws -> HealthAuthorizationRequestStatus,
+    requestAuthorization: @escaping @Sendable () async throws -> Void
+  ) {
+    self.requestStatus = requestStatus
+    self.requestAuthorization = requestAuthorization
+  }
+
+  public func requestReadAccess() async throws -> HealthReadAccess {
+    try Task.checkCancellation()
+    if let inFlight {
+      let result = try await inFlight.value
+      try Task.checkCancellation()
+      return result
+    }
+
+    let task = Task { try await self.checkAndRequest() }
+    inFlight = task
+    defer { inFlight = nil }
+    let result = try await task.value
+    try Task.checkCancellation()
+    return result
+  }
+
+  private func checkAndRequest() async throws -> HealthReadAccess {
+    do {
+      let status = try await requestStatus()
+      guard status == .shouldRequest else {
+        return status == .unnecessary ? .ready : .failed("Health authorization status is unavailable.")
+      }
+
+      try await requestAuthorization()
+      try Task.checkCancellation()
+      let updatedStatus = try await requestStatus()
+      return switch updatedStatus {
+      case .shouldRequest: .needsRequest
+      case .unnecessary: .ready
+      case .unknown: .failed("Health authorization status is unavailable.")
+      }
+    } catch is CancellationError {
+      throw CancellationError()
+    } catch {
+      return .failed(error.localizedDescription)
+    }
+  }
+}
+
 public struct HealthClient: Sendable {
-  public var requestReadAuthorization: @Sendable () async throws -> Void
+  public var requestReadAuthorization: @Sendable () async throws -> HealthReadAccess
   public var strengthWorkouts: @Sendable (Date, Date) async throws -> [HealthWorkout]
   public var walkingWorkouts: @Sendable (Date, Date) async throws -> [HealthWalkingWorkout]
   public var latestBodyMass: @Sendable () async throws -> HealthBodyMass?
   public var bodyMassSamples: @Sendable (Date, Date) async throws -> [HealthBodyMass]
 
   public init(
-    requestReadAuthorization: @escaping @Sendable () async throws -> Void,
+    requestReadAuthorization: @escaping @Sendable () async throws -> HealthReadAccess,
     strengthWorkouts: @escaping @Sendable (Date, Date) async throws -> [HealthWorkout],
     walkingWorkouts: @escaping @Sendable (Date, Date) async throws -> [HealthWalkingWorkout],
     latestBodyMass: @escaping @Sendable () async throws -> HealthBodyMass?,
@@ -67,7 +131,7 @@ public struct HealthClient: Sendable {
   )
 
   public static let preview = Self(
-    requestReadAuthorization: {},
+    requestReadAuthorization: { .ready },
     strengthWorkouts: { _, _ in [] },
     walkingWorkouts: { _, _ in [] },
     latestBodyMass: { nil },
@@ -75,7 +139,7 @@ public struct HealthClient: Sendable {
   )
 
   public static let test = Self(
-    requestReadAuthorization: {},
+    requestReadAuthorization: { .ready },
     strengthWorkouts: { _, _ in [] },
     walkingWorkouts: { _, _ in [] },
     latestBodyMass: { nil },

@@ -15,11 +15,16 @@ struct WorkoutScreen: View {
         .sheet(isPresented: $showingLastDone) {
           LatestCompletionCorrectionScreen(model: correctionsModel)
         }
-        .task(id: scenePhase) {
-          guard scenePhase == .active else {
+        .task {
+          if scenePhase == .active {
+            await model.screenAppeared()
+          }
+        }
+        .onChange(of: scenePhase) { _, phase in
+          guard phase == .active else {
             return
           }
-          await model.screenAppeared()
+          Task { await model.screenAppeared() }
         }
     }
   }
@@ -37,6 +42,9 @@ struct WorkoutScreen: View {
         )
         Button("Import Program", systemImage: "doc.text") { selectedTab = .program }
           .buttonStyle(.borderedProminent)
+        HealthAccessSection(access: model.healthReadAccess) {
+          Task { await model.connectToHealthButtonTapped() }
+        }
       }
     }
   }
@@ -45,6 +53,10 @@ struct WorkoutScreen: View {
     List {
       WorkoutSummaryRow(overview: overview) { showingLastDone = true }
 
+      HealthAccessSection(access: model.healthReadAccess) {
+        Task { await model.connectToHealthButtonTapped() }
+      }
+
       if let candidate = model.healthWorkoutCandidate {
         HealthWorkoutOffer(
           workout: candidate,
@@ -52,11 +64,6 @@ struct WorkoutScreen: View {
           accept: model.acceptHealthWorkoutButtonTapped,
           decline: model.declineHealthWorkoutButtonTapped
         )
-      } else if model.healthReadFailed {
-        Section {
-          Text("Health data couldn’t be loaded.")
-            .foregroundStyle(.secondary)
-        }
       }
 
       Section("Exercises") {
@@ -71,6 +78,32 @@ struct WorkoutScreen: View {
       }
 
       CompleteWorkoutRow(action: model.completeWorkoutButtonTapped)
+    }
+  }
+}
+
+struct HealthAccessSection: View {
+  var access: HealthReadAccess?
+  var connect: () -> Void
+
+  @ViewBuilder
+  var body: some View {
+    switch access {
+    case .needsRequest:
+      Section {
+        Button("Connect to Health", systemImage: "heart.text.square", action: connect)
+      }
+    case let .failed(message):
+      Section {
+        VStack(alignment: .leading, spacing: 4) {
+          Text("Couldn’t read Health")
+            .font(.headline)
+          Text(message)
+            .foregroundStyle(.secondary)
+        }
+      }
+    case .ready, .none:
+      EmptyView()
     }
   }
 }

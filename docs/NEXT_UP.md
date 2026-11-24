@@ -1,6 +1,5 @@
-# Next Up — Ask for Health access on every device
+# Next Up — nothing dispatched
 
-**Slices:** effort `health-access`
-**Briefs:** [docs/efforts/health-access.md](efforts/health-access.md)
-**Done when:** per the brief
+Nothing dispatched.
+
 **Owed:** see [device-passes.md](device-passes.md)

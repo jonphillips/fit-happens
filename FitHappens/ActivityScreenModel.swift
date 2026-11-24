@@ -20,6 +20,7 @@ final class ActivityScreenModel {
   private(set) var strengthWorkouts: [HealthWorkout] = []
   private(set) var walkingWorkouts: [HealthWalkingWorkout] = []
   private(set) var latestBodyMass: HealthBodyMass?
+  private(set) var healthReadAccess: HealthReadAccess?
   private(set) var hasLoaded = false
   var hasHealthActivity: Bool { !strengthWorkouts.isEmpty || !walkingWorkouts.isEmpty }
 
@@ -58,6 +59,14 @@ final class ActivityScreenModel {
   }
 
   func screenAppeared(calendar: Calendar) async {
+    await loadHealth(calendar: calendar)
+  }
+
+  func connectToHealthButtonTapped(calendar: Calendar) async {
+    await loadHealth(calendar: calendar)
+  }
+
+  private func loadHealth(calendar: Calendar) async {
     if let currentProgram,
        selectedExerciseKey.map({ key in orderedWeightedExercises.contains(where: { $0.key == key }) }) != true {
       let defaultKey = ActivityProjection.defaultExercise(program: currentProgram, exercises: exercises)?.key
@@ -72,6 +81,13 @@ final class ActivityScreenModel {
       return
     }
     do {
+      let access = try await healthClient.requestReadAuthorization()
+      healthReadAccess = access
+      guard access == .ready else {
+        clearHealthData()
+        hasLoaded = true
+        return
+      }
       async let strength = healthClient.strengthWorkouts(start, date.now)
       async let walking = healthClient.walkingWorkouts(start, date.now)
       async let bodyMass = healthClient.latestBodyMass()
@@ -81,10 +97,15 @@ final class ActivityScreenModel {
     } catch is CancellationError {
       return
     } catch {
-      strengthWorkouts = []
-      walkingWorkouts = []
-      latestBodyMass = nil
+      clearHealthData()
+      healthReadAccess = .failed(error.localizedDescription)
     }
     hasLoaded = true
+  }
+
+  private func clearHealthData() {
+    strengthWorkouts = []
+    walkingWorkouts = []
+    latestBodyMass = nil
   }
 }

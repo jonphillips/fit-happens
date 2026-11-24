@@ -19,13 +19,11 @@ final class WorkoutScreenModel {
     Completion.order { ($0.completedAt.desc(), $0.id.desc()) }.limit(20)
   ) private var completionHistory
   @ObservationIgnored @FetchAll(Completion.all) private var allCompletions
-  @ObservationIgnored @Shared(.appStorage("fitHappensHealthAuthRequested"))
-  private var healthAuthorizationRequested = false
   @ObservationIgnored @Shared(.appStorage("fitHappensDeclinedHealthWorkouts"))
   private var declinedWorkoutEndDatesRaw = ""
 
   private(set) var recentStrengthWorkouts: [HealthWorkout] = []
-  private(set) var healthReadFailed = false
+  private(set) var healthReadAccess: HealthReadAccess?
 
   var currentProgram: CurrentProgram? {
     withErrorReporting {
@@ -57,19 +55,28 @@ final class WorkoutScreenModel {
   }
 
   func screenAppeared() async {
-    if !healthAuthorizationRequested {
-      do {
-        try await healthClient.requestReadAuthorization()
-        $healthAuthorizationRequested.withLock { $0 = true }
-      } catch is CancellationError {
-        return
-      } catch {
-        $healthAuthorizationRequested.withLock { $0 = true }
-        healthReadFailed = true
+    await loadHealth()
+  }
+
+  func connectToHealthButtonTapped() async {
+    await loadHealth()
+  }
+
+  private func loadHealth() async {
+    do {
+      let access = try await healthClient.requestReadAuthorization()
+      healthReadAccess = access
+      guard access == .ready else {
+        recentStrengthWorkouts = []
         return
       }
+      await refreshHealthWorkouts()
+    } catch is CancellationError {
+      return
+    } catch {
+      healthReadAccess = .failed(error.localizedDescription)
+      recentStrengthWorkouts = []
     }
-    await refreshHealthWorkouts()
   }
 
   func acceptHealthWorkoutButtonTapped() {
@@ -114,11 +121,10 @@ final class WorkoutScreenModel {
       let workouts = try await healthClient.strengthWorkouts(windowStart, currentDate)
       recentStrengthWorkouts = workouts
       pruneDeclinedWorkoutIDs(olderThan: windowStart)
-      healthReadFailed = false
     } catch is CancellationError {
       return
     } catch {
-      healthReadFailed = true
+      healthReadAccess = .failed(error.localizedDescription)
     }
   }
 
