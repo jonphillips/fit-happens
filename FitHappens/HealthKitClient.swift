@@ -15,18 +15,53 @@ enum HealthKitClient {
 }
 
 private actor HealthStore {
-  private let store = HKHealthStore()
+  private let store: HKHealthStore
+  private let authorizationCoordinator: HealthAuthorizationCoordinator
 
-  func requestReadAuthorization() async throws {
-    guard HKHealthStore.isHealthDataAvailable() else {
-      return
-    }
-    let distance = HKQuantityType(.distanceWalkingRunning)
-    let bodyMass = HKQuantityType(.bodyMass)
-    try await store.requestAuthorization(
-      toShare: [],
-      read: [HKObjectType.workoutType(), distance, bodyMass]
+  init() {
+    let store = HKHealthStore()
+    self.store = store
+    self.authorizationCoordinator = HealthAuthorizationCoordinator(
+      requestStatus: {
+        let status = try await Self.requestStatus(for: store)
+        let result: HealthAuthorizationRequestStatus = switch status {
+        case HKAuthorizationRequestStatus.shouldRequest: .shouldRequest
+        case HKAuthorizationRequestStatus.unnecessary: .unnecessary
+        case HKAuthorizationRequestStatus.unknown: .unknown
+        @unknown default: .unknown
+        }
+        return result
+      },
+      requestAuthorization: {
+        try await store.requestAuthorization(toShare: [], read: Self.readTypes)
+      }
     )
+  }
+
+  private static var readTypes: Set<HKObjectType> {
+    [HKObjectType.workoutType(), HKQuantityType(.distanceWalkingRunning), HKQuantityType(.bodyMass)]
+  }
+
+  private static func requestStatus(for store: HKHealthStore) async throws -> HKAuthorizationRequestStatus {
+    let status = try await withCheckedThrowingContinuation {
+      (continuation: CheckedContinuation<HKAuthorizationRequestStatus, Error>) in
+      store.getRequestStatusForAuthorization(toShare: [], read: readTypes) { status, error in
+        if let error {
+          continuation.resume(throwing: error)
+        } else {
+          continuation.resume(returning: status)
+        }
+      }
+    }
+    try Task.checkCancellation()
+    return status
+  }
+
+  func requestReadAuthorization() async throws -> HealthReadAccess {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      return .failed("HealthKit isn’t available on this device.")
+    }
+    return try await authorizationCoordinator.requestReadAccess()
   }
 
   func strengthWorkouts(start: Date, end: Date) async throws -> [HealthWorkout] {

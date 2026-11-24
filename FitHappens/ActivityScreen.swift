@@ -27,14 +27,25 @@ struct ActivityScreen: View {
           CompletionDateCorrectionDestination(model: correctionsModel, completionID: completionID)
         }
       }
-      .task(id: isActive) {
-        if isActive { await model.screenAppeared(calendar: calendar) }
+      .task {
+        if isActive {
+          await model.screenAppeared(calendar: calendar)
+        }
+      }
+      .onChange(of: isActive) { _, active in
+        guard active else {
+          return
+        }
+        Task { await model.screenAppeared(calendar: calendar) }
       }
     }
   }
 
   private var activity: some View {
     List {
+      HealthAccessSection(access: model.healthReadAccess) {
+        Task { await model.connectToHealthButtonTapped(calendar: calendar) }
+      }
       calendarSection
       bodyWeightSection
       progressionSection
@@ -49,8 +60,11 @@ struct ActivityScreen: View {
   private var calendarSection: some View {
     Section("Last four weeks") {
       calendarGrid
-      if !model.hasHealthActivity {
+      if model.healthReadAccess == .ready, !model.hasHealthActivity {
         Text("Nothing from Health yet.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        Text("Check Settings → Health → Data Access & Devices → Fit Happens if you expected activity.")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
@@ -66,8 +80,11 @@ struct ActivityScreen: View {
         } label: {
           Text(bodyMass.date.formatted(date: .abbreviated, time: .omitted))
         }
-      } else {
+      } else if model.healthReadAccess == .ready {
         Text("Nothing from Health yet.")
+          .foregroundStyle(.secondary)
+        Text("Check Settings → Health → Data Access & Devices → Fit Happens if you expected a reading.")
+          .font(.caption)
           .foregroundStyle(.secondary)
       }
     }
