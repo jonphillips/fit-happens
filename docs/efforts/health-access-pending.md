@@ -1,7 +1,7 @@
 # Effort — A Health request that never returns
 
 Status: Ready
-Summary: On Jon's iPhone the Health request never returns, so Activity spins for good and Next Workout shows nothing. Show Activity at once, show a request that's still waiting, let Connect to Health start a fresh request, and log each step of the request so a Console capture shows where it stops.
+Summary: A stuck healthd on Jon's iPhone queued the Health request and never answered, so Activity spun for good and Next Workout showed nothing; a restart cleared it. Show Activity at once, show a waiting request with Connect to Health and a restart hint, and log each step of the request.
 
 ## Why
 
@@ -18,8 +18,19 @@ phone. Build 36 had no way to show that. In build 38 it locks the screens:
 - Next Workout shows a row only for `needsRequest` and `failed`. While the request is pending,
   `healthReadAccess` is `nil` and the screen says nothing.
 
-Why the request doesn't return on that phone isn't known yet. This effort makes the app survive it,
-show it, and log it.
+**The cause was the phone.** The architect captured the iPhone's log over USB while Jon relaunched
+the app. The app asked, and `healthd` took the request and queued it behind an older one that never
+moved:
+
+```
+13:37:48.640  FitHappens  Requesting prompting authorization to share …, read …
+13:37:48.646  healthd     Enqueuing authorization request
+13:37:48.660  healthd     Added authorization request F3E0BA0D… to group for . Request count: 2
+```
+
+No prompt was shown and the request never returned. Restarting the iPhone cleared the queue, and the
+prompt appeared at once. The app can't clear a stuck `healthd`, and a fresh request just queues
+behind the stuck one. So this effort makes the app survive it, say what to do, and log it.
 
 ## Dispatch 1 — Build
 
@@ -27,7 +38,8 @@ show it, and log it.
   wait on Health. The spinner goes, or covers only the Health parts until the first Health answer.
 - **A pending request is a state.** `HealthReadAccess` gains `waiting`, for a request that's been
   made with no answer yet. Both screens show it as "Waiting for Health…" with a Connect to Health
-  button, so a request that never returns still offers a way out.
+  button, plus: "If no Health prompt appears, restart your iPhone." That's the fix that worked on
+  2026-11-24. The button covers a request that was lost; the restart covers a stuck `healthd`.
 - **Connect to Health starts a fresh request.** A tap doesn't join one that's pending. Screen
   activations still share the pending request, so two screens appearing together ask once. The
   coordinator drops a stale request's answer when a newer one has finished.
