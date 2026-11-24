@@ -67,7 +67,6 @@ final class ActivityScreenModel {
   }
 
   private func loadHealth(calendar: Calendar) async {
-    hasLoaded = false
     if let currentProgram,
        selectedExerciseKey.map({ key in orderedWeightedExercises.contains(where: { $0.key == key }) }) != true {
       let defaultKey = ActivityProjection.defaultExercise(program: currentProgram, exercises: exercises)?.key
