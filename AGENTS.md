@@ -6,12 +6,9 @@ body weight from Apple Health. A headless Mac listener on the always-on mini fee
 readings into Health. The aim is a **finished** app, not a platform. [docs/PRODUCT.md](docs/PRODUCT.md)
 has the scope and the non-goals; read them before adding anything.
 
-## Working mode: architect / executor
+## Working mode
 
-Claude = architect (docs, ADRs, milestones, reviews; **no feature code**). Codex = executor (builds
-`docs/NEXT_UP.md`, one branch + PR per dispatch). Routing for a bare "go" is in jon-platform
-`AGENTS.md`; the protocol is `jon-platform/docs/agent-collaboration.md` and ADR-0005. Jon approves
-plans by merging plan PRs.
+Architect / executor, per jon-platform `AGENTS.md`.
 
 ## Read first
 
